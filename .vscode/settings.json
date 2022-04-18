@@ -1,0 +1,10 @@
+{
+  "editor.tabSize": 2,
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "stylelint.validate": ["css", "less", "scss", "postcss", "vue"],
+  "files.exclude": {
+    "backend": true
+  }
+}

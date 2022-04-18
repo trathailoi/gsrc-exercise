@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+  gsrs-frontend:
+    build:
+      context: .
+      args:
+        - VITE_BASE_API=http://gsrs.loi-tra
+    image: gsrs-frontend
+    container_name: gsrs-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VIRTUAL_HOST=gsrs.loi-tra
+      - API_URL=http://gsrs-backend:3000
+      - API_HOST=gsrs-backend
+    command: nginx -g 'daemon off;'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O /dev/null http://gsrs.loi-tra/nginx-health || exit 1"]
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - gsrs-backend
+
+networks:
+  default:
+    name: gsrs-local-net
+    driver: bridge
+  
+volumes:
+  postgres-data:

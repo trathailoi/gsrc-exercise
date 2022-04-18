@@ -1,0 +1,12 @@
+.git*
+.github
+.vscode
+coverage
+node_modules
+.editorconfig
+# .eslint*
+# .stylelint*
+commitlint*
+docker-compose*
+Dockerfile*
+# postcss.config.js

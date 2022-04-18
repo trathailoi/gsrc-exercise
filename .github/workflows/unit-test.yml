@@ -1,0 +1,129 @@
+name: Unit Tests
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ develop ]
+    paths:
+      - 'backend/**'
+      - 'src/**'
+      - '!**.spec.js'
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - 'backend/**'
+      - 'src/**'
+      - '!**.spec.js'
+
+jobs:
+
+  frontend:
+    # needs: [detect_changes]
+    # if: needs.detect_changes.outputs.frontend_has_been_changed == 'true'
+    runs-on: ubuntu-latest
+    # runs-on: [self-hosted]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17.x
+    - name: Cache Node Modules
+      id: fe-node-cache
+      uses: actions/cache@v2
+      env:
+        cache-name: fe-cache-deps
+      with:
+        # # npm cache files are stored in `~/.npm` on Linux/macOS
+        # path: ~/.npm
+        path: node_modules
+        key: fe-node-modules-${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          fe-node-modules-${{ runner.os }}-${{ env.cache-name }}-
+          fe-node-modules-${{ runner.os }}-
+          fe-node-modules-
+    - name: install packages
+      if: steps.fe-node-cache.outputs.cache-hit != 'true'
+      run: npm ci
+    - name: test
+      run: npm run test:jest
+      # --changedSince
+#       env:
+#         CI: true
+
+    # - uses: toko-bifrost/ms-teams-deploy-card@master #  or "./" if in a local set-up
+    #   if: failure()
+    #   with:
+    #     github-token: ${{ github.token }}
+    #     webhook-uri: ${{ secrets.MSTEAMS_DEV_ONLY_WEBHOOK }}
+
+  backend:
+    # needs: [detect_changes]
+    # if: needs.detect_changes.outputs.backend_has_been_changed == 'true'
+    runs-on: ubuntu-latest
+    # runs-on: [self-hosted]
+
+    steps:
+    - uses: actions/checkout@v2
+#       with:
+#         path: 'backend'
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17.x
+    - name: Cache Node Modules
+      id: be-node-cache
+      uses: actions/cache@v2
+      env:
+        cache-name: be-cache-deps
+      with:
+        # # npm cache files are stored in `~/.npm` on Linux/macOS
+        # path: ~/.npm
+        path: backend/node_modules
+        key: be-node-modules-${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('backend/package-lock.json') }}
+        restore-keys: |
+          be-node-modules-${{ runner.os }}-${{ env.cache-name }}-
+          be-node-modules-${{ runner.os }}-
+          be-node-modules-
+    - name: install packages
+      if: steps.be-node-cache.outputs.cache-hit != 'true'
+      working-directory: backend
+      run: npm ci
+
+    - name: test (natively)
+      if: github.event_name != 'pull_request'
+      # working-directory: backend
+#       run: npm run test:unit -- --coverage
+      run: |
+        cd backend
+        cp .env.test .env
+        npm run test
+      # env:
+      #   CI: true
+
+    - uses: artiomtr/jest-coverage-report-action@v1.3
+      if: github.event_name == 'pull_request'
+      with:
+        # github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ github.token }}
+        working_directory: backend
+
+    # - uses: toko-bifrost/ms-teams-deploy-card@master #  or "./" if in a local set-up
+    #   if: failure()
+    #   with:
+    #     github-token: ${{ github.token }}
+    #     webhook-uri: ${{ secrets.MSTEAMS_DEV_ONLY_WEBHOOK }}
+
+    # - name: Send a message to Microsoft Teams on failure
+    #   if: failure()
+    #   uses: aliencube/microsoft-teams-actions@v0.8.0
+    #   with:
+    #     webhook_uri: ${{ secrets.MSTEAMS_DEV_ONLY_WEBHOOK }}
+    #     title: "Fail rồi ae"
+    #     summary: "This is summary"
+    #     text: "this is text"
+    #     theme_color: "f2f2f2"
+    #     sections: '[{ "activityTitle": "hello world" }]'
+    #     actions: '[{ "@type": "OpenUri", "name": "lorem ipsum", "targets": [{ "os": "default", "uri": "https://google.com" }] }]'
+

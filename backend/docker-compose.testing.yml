@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  gsrs-testing-db:
+    image: postgres
+    container_name: gsrs-testing-db
+    restart: always
+    env_file:
+      - .env.test # to get the following env vars: POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
+    ports:
+      - "5433:5432" # diffent port for test
+    volumes:
+      - postgres-testing-data:/var/lib/postgresql/data
+    #   - ./data/postgres:/data/postgres (?)
+
+networks:
+  default:
+    name: gsrs-testing-net
+    driver: bridge
+
+volumes:
+  postgres-testing-data:

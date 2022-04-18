@@ -1,0 +1,209 @@
+openapi: 3.0.0
+info:
+  description: |
+    An APIs design for Google Search Results Scraper (GSRS)
+  version: "1.0.0"
+  title: Google Search Results Scraper (GSRS)
+  contact:
+    email: trathailoi@gmail.com
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/trathailoi/my-first-API/1.0.0
+  - description: Please run the app locally on port 3000
+    url: 'http://localhost:3000/api'
+tags:
+  - name: user
+    description: Users
+
+paths:
+  # Users
+  /users:
+    post:
+      tags:
+        - user
+      summary: Add a new user
+      operationId: create_User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User_Dto'
+        description: form data object that contains fields to update a specific user
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+    get:
+      tags:
+        - user
+      summary: Finds Users
+      description: Finds all the users
+      operationId: findAll_User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+  '/users/{id}':
+    get:
+      tags:
+        - user
+      summary: Find user by ID
+      description: Returns a single user
+      operationId: findOne_User
+      parameters:
+        - name: id
+          in: path
+          description: ID of user to return
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+    patch:
+      tags:
+        - user
+      summary: Updates an existing user by ID
+      operationId: update_User
+      parameters:
+        - name: id
+          in: path
+          description: ID of the user that needs to be updated
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User_Dto'
+        description: form data object that contains fields to update a specific user
+      responses:
+        '204':
+          $ref: '#/components/responses/204NoContent'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+    delete:
+      tags:
+        - user
+      summary: Deletes an user by ID
+      operationId: delete_User
+      parameters:
+        - name: id
+          in: path
+          description: User id to delete
+          required: true
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '204':
+          $ref: '#/components/responses/204NoContent'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+components:
+  schemas:
+    User_Dto: # Can be referenced as '#/components/schemas/User_Dto'
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          example: trathailoi@gmail.com
+        firstName:
+          type: string
+          example: Loi
+        lastName:
+          type: string
+          example: Tra
+        password:
+          type: string
+          example: youknowwhatitis
+    User: # Can be referenced as '#/components/schemas/User'
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/uuid'
+        - $ref: '#/components/schemas/User_Dto'
+    UserResponse: # Can be referenced as '#/components/schemas/UserResponse'
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/uuid'
+        email:
+          type: string
+          example: trathailoi@gmail.com
+        firstName:
+          type: string
+          example: Loi
+        lastName:
+          type: string
+          example: Tra
+
+    uuid: # Can be referenced as '#/components/schemas/uuid'
+      type: string
+      format: uuid
+      minLength: 36
+      maxLength: 36
+      example: 5f36215d-f5c6-4896-087c-f30f3678f607
+
+  responses:
+    204NoContent: # Can be referenced as '#/components/responses/204NoContent'
+      description: No Content
+    404NotFound: # Can be referenced as '#/components/responses/404NotFound'
+      description: Not found. The resource was not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              statusCode:
+                type: integer
+                example: 404
+              error:
+                type: string
+                example: Not Found
+              message:
+                type: string
+                example: Not Found
+    400BadRequest: # Can be referenced as '#/components/responses/400BadRequest'
+      description: Bad request. Invalid input supplied.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              statusCode:
+                type: integer
+                example: 400
+              error:
+                type: string
+                example: Bad Request
+              message:
+                type: string
+                example: '"title" is required'

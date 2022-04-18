@@ -1,0 +1,65 @@
+version: '3.3'
+
+services:
+
+  gsrs-frontend:
+    # build:
+    #   context: .
+    #   args:
+    #     - VITE_BASE_API=http://gsrs.loi-tra
+    # image: gsrs-frontend
+    image: nginx:stable-alpine
+    container_name: gsrs-frontend
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - ./dist:/usr/share/nginx/html
+    environment:
+      - VIRTUAL_HOST=gsrs.loitra.xyz
+      - LETSENCRYPT_HOST=gsrs.loitra.xyz
+      - LETSENCRYPT_EMAIL=trathailoi@gmail.com
+      - API_URL=http://gsrs-backend
+      - API_HOST=gsrs-backend
+    # command: nginx -g 'daemon off;'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O /dev/null http://gsrs.loitra.xyz/nginx-health || exit 1"]
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - gsrs-backend
+  
+  gsrs-backend:
+    container_name: gsrs-backend
+    # build:
+    #   context: ./backend
+    #   target: production
+    build: ./backend
+    image: gsrs-backend
+    restart: on-failure
+    env_file:
+      - ./backend/.env
+    environment:
+      - MODE=PROD
+      - CLIENT_URL=https://gsrs.loitra.xyz
+      - POSTGRES_HOST=gsrs-db
+    depends_on:
+      - gsrs-db
+    tty: true
+    stdin_open: true
+  
+  gsrs-db:
+    image: postgres:9.6
+    container_name: gsrs-db
+    restart: always
+    env_file:
+      - ./backend/.env # to get the following env vars: POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    #   - ./data/postgres:/data/postgres (?)
+  
+volumes:
+  postgres-data:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy-net

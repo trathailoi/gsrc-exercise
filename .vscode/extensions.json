@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "johnsoncodehk.volar",
+    "johnsoncodehk.vscode-typescript-vue-plugin",
+    "bradlc.vscode-tailwindcss",
+    "stylelint.vscode-stylelint",
+    "dbaeumer.vscode-eslint",
+    "usernamehw.errorlens",
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    "softwaredotcom.swdc-vscode",
+    "wix.vscode-import-cost"
+  ]
+}
