@@ -13,6 +13,15 @@ services:
       - postgres-testing-data:/var/lib/postgresql/data
     #   - ./data/postgres:/data/postgres (?)
 
+  gsrs-testing-redis:
+    image: redis:5-alpine
+    container_name: gsrs-testing-redis
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - redis-testing-data:/data
+
 networks:
   default:
     name: gsrs-testing-net
@@ -20,3 +29,4 @@ networks:
 
 volumes:
   postgres-testing-data:
+  redis-testing-data:

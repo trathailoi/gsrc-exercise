@@ -17,6 +17,7 @@ services:
       # - CLIENT_URL=http://localhost:8080
       - CLIENT_URL=http://gsrs.loi-tra
       - POSTGRES_HOST=gsrs-db
+      - REDIS_HOST=gsrs-redis
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -37,6 +38,15 @@ services:
       - postgres-data:/var/lib/postgresql/data
     #   - ./data/postgres:/data/postgres (?)
 
+  gsrs-redis:
+    image: redis:5-alpine
+    container_name: gsrs-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT-6379}:6379"
+    volumes:
+      - redis-data:/data
+
 networks:
   default:
     name: gsrs-local-net
@@ -44,3 +54,4 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:

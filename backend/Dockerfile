@@ -9,8 +9,6 @@ COPY ./tsconfig.build.json ./
 COPY ./tsconfig.json ./
 
 RUN npm install
-RUN npm install @nestjs/platform-express
-# RUN npm install -g @nestjs/cli
 
 ARG PORT=80
 ENV PORT=${PORT}
