@@ -1,10 +1,11 @@
 import 'dotenv/config'
-import { TypeOrmModuleOptions } from '@nestjs/typeorm'
+import * as Joi from 'joi'
+import { RedisOptions } from 'ioredis'
 
 export class AppConfig {
   constructor(private env: { [k: string]: string | undefined }) { }
 
-  private getValue(key: string, throwOnMissing = true): string {
+  getValue(key: string, throwOnMissing = true): string {
     const value = this.env[key]
     if (!value && throwOnMissing) {
       throw new Error(`config error - missing env.${key}`)
@@ -13,79 +14,76 @@ export class AppConfig {
     return value
   }
 
-  public ensureValues(keys: string[]) {
+  ensureValues(keys: string[]) {
     keys.forEach((k) => this.getValue(k, true))
     return this
   }
 
-  public getPort() {
+  getPort() {
     return this.getValue('PORT', true)
   }
 
-  public getGlobalPrefix() {
+  getGlobalPrefix() {
     // return this.getValue('API_PREFIX', true)
     return 'api'
   }
 
-  public getApiVersion() {
+  getApiVersion() {
     return this.getValue('API_VERSION', true)
   }
 
-  public getClientUrl() {
+  getClientUrl() {
     return this.getValue('CLIENT_URL', true) // || 'http://localhost:8080'
   }
 
-  public getAuthTokenKey() {
+  getAuthTokenKey() {
     return this.getValue('AUTH_TOKEN_KEY', true) // || 'http://localhost:8080'
   }
 
-  public isProduction() {
+  isProduction() {
     const mode = this.getValue('MODE', false)
     return mode === 'PROD' || process.env.NODE_ENV === 'production'
   }
 
-  public isTest() {
+  isTest() {
     const mode = this.getValue('MODE', false)
     return mode === 'TEST' || process.env.NODE_ENV === 'test'
   }
 
-  public isDebug() {
+  isDebug() {
     return this.getValue('DEBUG', false) === 'true'
   }
 
-  public isVerbose() {
+  isVerbose() {
     return this.getValue('VERBOSE', false) === 'true'
   }
 
-  public showHealthLogs() {
+  showHealthLogs() {
     return this.getValue('SHOW_HEALTH_LOGS', false) === 'true'
   }
 
-  public getTypeOrmConfig(): TypeOrmModuleOptions {
+  getGeneralValidationSchema() {
+    return Joi.object({
+      PORT: Joi.number().default(this.getPort()),
+      NODE_ENV: Joi.string()
+        .valid('development', 'production', 'test', 'provision')
+        .default('development')
+    })
+  }
+
+  getRedisConfig(): RedisOptions {
     return {
-      type: 'postgres',
-      host: this.getValue('POSTGRES_HOST'),
-      port: Number(this.getValue('POSTGRES_PORT')),
-      username: this.getValue('POSTGRES_USER'),
-      password: this.getValue('POSTGRES_PASSWORD'),
-      database: this.getValue('POSTGRES_DB'),
-      entities: ['**/*.entity{.ts,.js}'],
-      migrations: ['src/database/migration/*.ts'],
-      cli: {
-        migrationsDir: 'src/database/migration'
-      },
-      ssl: this.isProduction()
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: parseInt(process.env.REDIS_PORT, 10) || 6379
     }
+  }
+
+  getRedisConfigValidationSchema() {
+    return Joi.object({
+      REDIS_HOST: Joi.string().required(),
+      REDIS_PORT: Joi.number().required()
+    })
   }
 }
 
-const appConfig = new AppConfig(process.env)
-  .ensureValues([
-    'POSTGRES_HOST',
-    'POSTGRES_PORT',
-    'POSTGRES_USER',
-    'POSTGRES_PASSWORD',
-    'POSTGRES_DB'
-  ])
-
-export { appConfig }
+export const appConfig = new AppConfig(process.env)

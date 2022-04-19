@@ -1,4 +1,5 @@
 import { join } from 'path'
+import * as Joi from 'joi'
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm'
 // import type { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 
@@ -20,6 +21,14 @@ export const dbConfig = (): TypeOrmModuleOptions & { seeds: string[]; factories:
     migrationsDir: join(__dirname, '../database/migration'),
     entitiesDir: join(__dirname, '../**/*.entity{.ts,.js}')
   }
+})
+
+export const validationSchema = Joi.object({
+  POSTGRES_HOST: Joi.string().required(),
+  POSTGRES_PORT: Joi.number().required(),
+  POSTGRES_USER: Joi.string().required(),
+  POSTGRES_PASSWORD: Joi.string().required(),
+  POSTGRES_DB: Joi.string().required()
 })
 
 export default dbConfig()
