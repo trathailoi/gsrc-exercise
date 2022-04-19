@@ -1,15 +1,19 @@
 import {
   PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn, BaseEntity as SuperBaseEntity, ManyToOne
 } from 'typeorm'
+import { ApiProperty } from '@nestjs/swagger'
 import { User } from '../user/user.entity'
 
 export abstract class BaseEntity<T> extends SuperBaseEntity {
+  @ApiProperty({ type: 'uuid', example: 'f620a1bf-d317-4bcb-a190-0213bede890b' })
   @PrimaryGeneratedColumn('uuid')
     id?: string
 
+  @ApiProperty({ type: 'boolean', example: true })
   @Column({ type: 'boolean', default: true })
     isActive?: boolean
 
+  @ApiProperty({ type: 'boolean', example: false })
   @Column({ type: 'boolean', default: false })
     isArchived?: boolean
 
@@ -27,6 +31,7 @@ export abstract class BaseEntity<T> extends SuperBaseEntity {
   // })
   //   updatedTime: Date
 
+  @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
   @CreateDateColumn({
     type: 'timestamptz',
     default: 'now()' // default: () => 'CURRENT_TIMESTAMP'
@@ -34,6 +39,7 @@ export abstract class BaseEntity<T> extends SuperBaseEntity {
   })
     createdAt?: Date
 
+  @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
   @UpdateDateColumn({
     type: 'timestamptz',
     default: 'now()' // default: () => 'CURRENT_TIMESTAMP'

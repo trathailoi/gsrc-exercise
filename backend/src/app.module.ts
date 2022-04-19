@@ -29,9 +29,18 @@ import { AuthModule } from './auth/auth.module'
 import { JwtAuthGuard } from './auth/jwt-auth.guard'
 
 import { ScraperModule } from './scraper/scraper.module'
+import { KeywordModule } from './keyword/keyword.module'
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      // envFilePath: ['.env.test', '.env'],
+      ignoreEnvFile: true,
+      validationSchema: appConfig.getGeneralValidationSchema()
+    }),
+    DatabaseModule,
+    LoggerModule,
+    TerminusModule,
     RedisModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -47,21 +56,14 @@ import { ScraperModule } from './scraper/scraper.module'
         redis: appConfig.getRedisConfig()
       })
     }),
-    DatabaseModule,
-    LoggerModule,
-    TerminusModule,
-    ConfigModule.forRoot({
-      // envFilePath: ['.env.test', '.env'],
-      ignoreEnvFile: true,
-      validationSchema: appConfig.getGeneralValidationSchema()
-    }),
-    UserModule,
-    AuthModule,
     ThrottlerModule.forRoot({
       ttl: 30, // retry after 30 seconds
       limit: 10 // limit to 10 requests per 30 seconds
     }),
-    ScraperModule
+    UserModule,
+    AuthModule,
+    ScraperModule,
+    KeywordModule
 
     // AutomapperModule.forRoot({
     //   options: [{
