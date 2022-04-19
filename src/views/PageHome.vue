@@ -3,7 +3,7 @@
     <n-space justify="space-between">
       <n-upload
         :show-file-list="false"
-        :custom-request="customRequest"
+        :custom-request="uploadHandler"
         :accept="'.csv'"
         class="my-4"
       >
@@ -18,6 +18,18 @@
         Refresh
       </n-button>
     </n-space>
+    <n-input-group>
+      <n-input
+        v-model:value="q"
+        clearable
+        placeholder="Type keywords to search"
+        :style="{ width: '50%' }"
+        @keydown.enter="getList"
+      />
+      <n-button type="primary" ghost @click="getList">
+        Search
+      </n-button>
+    </n-input-group>
     <n-data-table
       :columns="columns"
       :data="items"
@@ -44,6 +56,13 @@ import axios from 'axios'
 const router = useRouter()
 const dialog = useDialog()
 const message = useMessage()
+
+const q = ref('')
+const CancelToken = axios.CancelToken
+let source = CancelToken.source()
+
+const items = ref([])
+const loading = ref(true)
 
 const baseUrl = `${import.meta.env.VITE_BASE_API || ''}${import.meta.env.VITE_BASE_API_VERSION || '/api/v1.0'}`
 
@@ -166,21 +185,27 @@ const pagination = reactive({
   }
 })
 
-const items = ref([])
-const loading = ref(true)
-
 async function getList() {
   try {
     loading.value = true
-    const { data } = await getKeywords({
-      pageSize: pagination.pageSize,
-      currentPage: pagination.page
-    })
+    await source.cancel('Cancel for keywork.')
+    source = CancelToken.source()
+    const { data } = await getKeywords(
+      {
+        pageSize: pagination.pageSize,
+        currentPage: pagination.page,
+        ...(q.value ? { q: q.value } : {})
+      },
+      source.token
+    )
     items.value = data.data
     pagination.itemCount = data.count
     loading.value = false
     // message.success('Successfully fetched keywords')
   } catch (err: any) {
+    if (err instanceof axios.Cancel) {
+      return
+    }
     if (err.response) {
       message.error(err.message)
     } else if (err.request) {
@@ -191,7 +216,7 @@ async function getList() {
   }
 }
 
-const customRequest = ({
+const uploadHandler = ({
   file,
   data,
   onFinish,
@@ -216,7 +241,11 @@ const customRequest = ({
       }
     })
     .then((res) => {
-      message.success(res.data)
+      if (res.data.length === 0) {
+        message.warning('No new keywords found')
+      } else {
+        message.success(res.data)
+      }
       onFinish()
     })
     .catch((error) => {

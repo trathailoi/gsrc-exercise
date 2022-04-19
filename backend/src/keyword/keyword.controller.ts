@@ -17,6 +17,7 @@ import { MzPublic } from '../decorators/public.decorator'
 import { KeywordService } from './keyword.service'
 import { KeywordDto } from './dto/keyword.dto'
 import { KeywordResultDto } from './dto/keyword.result.dto'
+import { Like } from 'typeorm'
 
 @ApiTags('keywords')
 @MzSwaggerAuth()
@@ -78,7 +79,8 @@ export class KeywordController {
     query: Joi.object({
       pageSize: Joi.number().integer().min(1).max(50)
         .default(10),
-      currentPage: Joi.number().integer().min(1).default(1)
+      currentPage: Joi.number().integer().min(1).default(1),
+      q: Joi.string()
     })
   }))
   @ApiQuery({
@@ -87,9 +89,17 @@ export class KeywordController {
   @ApiQuery({
     name: 'currentPage', required: false, schema: { minimum: 1 }, description: 'Current page.'
   })
+  @ApiQuery({
+    name: 'q', required: false, schema: { minimum: 1 }, description: 'Searching keyword.'
+  })
   @MzPublic()
-  async findAll(@Query('pageSize') pageSize: number, @Query('currentPage') currentPage: number) {
+  async findAll(@Query('pageSize') pageSize: number, @Query('currentPage') currentPage: number, @Query('q') q: string) {
+    const whereObj: { where?: object } = {}
+    if (q) {
+      whereObj.where = { name: Like(`%${q}%`) }
+    }
     const { data, count } = await this.keywordService.findAll({
+      ...whereObj,
       pagination: {
         pageSize,
         currentPage
