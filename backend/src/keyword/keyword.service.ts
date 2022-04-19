@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, ConflictException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, InsertResult, UpdateResult } from 'typeorm'
+import {
+  Repository, InsertResult, UpdateResult, In
+} from 'typeorm'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
 import type { EntityId } from 'typeorm/repository/EntityId'
@@ -24,8 +26,12 @@ export class KeywordService extends BaseService<Keyword> {
   }
 
   async create(entity: KeywordResultDto, createdBy: User): Promise<InsertResult> {
+    const foundKeyword = await this.repo.findOne({ name: entity.name, createdBy })
+    if (foundKeyword) {
+      throw new ConflictException('Keyword already exists')
+    }
     const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: entity.name })
-    return this.repository.insert(
+    return this.repo.insert(
       this.mapper.map(
         KeywordResultDto,
         Keyword,
@@ -36,6 +42,34 @@ export class KeywordService extends BaseService<Keyword> {
         }
       )
     )
+  }
+
+  async createMany(entities: KeywordResultDto[], createdBy: User): Promise<any> {
+    const uniqueKeywords = [...new Set(entities.map((entity) => entity.name))]
+    const foundKeywords = await this.repo.find({ name: In(uniqueKeywords), createdBy })
+    const foundKeywordsStrings = foundKeywords.map((foundKeyword) => foundKeyword.name)
+    const jobs = uniqueKeywords.reduce((vKs, keyword) => {
+      if (foundKeywordsStrings.includes(keyword)) {
+        return vKs
+      }
+      return [...vKs, this.scrapeQueue.add(JOB_NAME, { keyword })]
+    }, [])
+    if (jobs.length) {
+      const allJobs = await Promise.all(jobs)
+      const result = await this.repo.insert(
+        allJobs.map((job) => this.mapper.map(
+          KeywordResultDto,
+          Keyword,
+          {
+            jobQueueId: job.id,
+            name: job.data.keyword,
+            createdBy
+          }
+        ))
+      )
+      return result.identifiers
+    }
+    return []
   }
 
   findOne(id: EntityId): Promise<Keyword | undefined> {
