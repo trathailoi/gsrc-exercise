@@ -4,6 +4,10 @@ import { Injectable } from '@nestjs/common'
 import { User } from '../user/user.entity'
 import { CreateUserDto } from '../user/dto/create-user.dto'
 
+import { Keyword } from '../keyword/keyword.entity'
+import { KeywordDto } from '../keyword/dto/keyword.dto'
+import { KeywordResultDto } from '../keyword/dto/keyword.result.dto'
+
 /**
  * Wrapper around automapper, for dependency injection convenience (static/global variables bad)
  */
@@ -46,6 +50,18 @@ class Mapper {
       CreateUserDto,
       User,
       ['id', 'email', 'firstName', 'lastName', 'password']
+    )
+
+    this.createDefaultBiDiMap(
+      KeywordDto,
+      Keyword,
+      ['id', 'name', 'jobQueueId', 'isFinishedScraping', 'adwordsCount', 'linksCount', 'resultStats', 'rawHtml', 'createdBy', 'modifiedBy']
+    )
+
+    this.createDefaultBiDiMap(
+      KeywordResultDto,
+      Keyword,
+      ['id', 'name', 'jobQueueId', 'isFinishedScraping', 'adwordsCount', 'linksCount', 'resultStats', 'rawHtml', 'createdBy', 'modifiedBy']
     )
   }
 

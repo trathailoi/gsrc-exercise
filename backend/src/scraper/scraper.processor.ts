@@ -3,9 +3,12 @@ import { load as cheerioLoad } from 'cheerio'
 import { Process, Processor } from '@nestjs/bull'
 import { Job, DoneCallback } from 'bull'
 
-// import { proxies } from './proxies.factory'
+import { QUEUE_NAME, JOB_NAME } from '../constants/job-queue'
 import { FmLogger } from '../logger/logger.service'
 
+import { KeywordService } from '../keyword/keyword.service'
+
+// import { proxies } from './proxies.factory'
 // const proxyServerUri = proxies[Math.floor(Math.random() * proxies.length)]
 // console.log('proxyServerUri', proxyServerUri)
 
@@ -32,41 +35,62 @@ type ResultInfo = Record<string, unknown> | {
 const crawl = async (keyword: string) => {
   const url = `https://www.google.com/search?q=${keyword}`
   console.log('Crawl: ', url)
-  const resultInfo: ResultInfo = {}
-  const html = await getHtml(url)
-  const $ = cheerioLoad(html)
+  const resultInfo: ResultInfo = {
+    adwordsCount: 2,
+    linksCount: 116,
+    resultStats: 'About 158,000,000 results (0.48 seconds)',
+    rawHtml: '<html><body></body></html>'
+  }
 
-  const ads = $('#tads > div > [data-text-ad]') // or [data-hveid]
-  console.log('ads', ads)
-  resultInfo.adwordsCount = ads.length
+  // const html = await getHtml(url)
+  // const $ = cheerioLoad(html)
 
-  const allLinks = $('a')
-  console.log('allLinks', allLinks)
-  resultInfo.linksCount = allLinks.length
+  // const ads = $('#tads > div > [data-text-ad]') // or [data-hveid]
+  // console.log('ads', ads)
+  // resultInfo.adwordsCount = ads.length
 
-  const resultStats = $('#resultStats').text()
-  console.log('resultStats', resultStats)
-  resultInfo.resultStats = resultStats
+  // const allLinks = $('a')
+  // console.log('allLinks', allLinks)
+  // resultInfo.linksCount = allLinks.length
 
-  resultInfo.rawHtml = $.html()
+  // const resultStats = $('#resultStats').text()
+  // console.log('resultStats', resultStats)
+  // resultInfo.resultStats = resultStats
+
+  // resultInfo.rawHtml = $.html()
+
+  // eslint-disable-next-line no-promise-executor-return
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
   return resultInfo
 }
 
-@Processor('scraper')
+@Processor(QUEUE_NAME)
 export class ScraperProcessor {
   private readonly logger = new FmLogger(ScraperProcessor.name)
 
-  @Process('scrape')
+  constructor(private readonly keywordService: KeywordService) {}
+
+  @Process(JOB_NAME)
   async handleTranscode(job: Job, doneCallback: DoneCallback) {
     this.logger.log('Start scraping...')
     const { keyword } = job.data
-    this.logger.log('keyword', keyword)
-    // TODO: save to db
-    // const resultInfo = await crawl(keyword)
-    // console.log('resultInfo', resultInfo)
+    this.logger.log(`job - keyword: ${job.id} - ${keyword}`)
 
-    doneCallback(null, { keyword })
+    const resultInfo = await crawl(keyword)
+    const foundKeywordRecord = await this.keywordService.findOneByJob(String(job.id))
+    if (foundKeywordRecord) {
+      await this.keywordService.update(foundKeywordRecord.id, {
+        ...resultInfo,
+        isFinishedScraping: true
+      })
+    }
+
+    doneCallback(null, {
+      keyword,
+      keywordRecordId: foundKeywordRecord && foundKeywordRecord.id,
+      success: true
+    })
     this.logger.log('Scraping completed')
   }
 }

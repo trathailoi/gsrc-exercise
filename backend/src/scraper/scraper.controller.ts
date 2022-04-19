@@ -10,14 +10,16 @@ import { Queue } from 'bull'
 // import { diskStorage } from 'multer'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger'
+
 import { readCsvAsync } from '../common/utils'
+import { QUEUE_NAME } from '../constants/job-queue'
 import FileUploadDto from './file-upload.dto'
 
 @ApiTags('scraper')
 @Controller('scraper')
 export class ScraperController {
   constructor(
-    @InjectQueue('scraper') private readonly fileQueue: Queue
+    @InjectQueue(QUEUE_NAME) private readonly scrapeQueue: Queue
   ) {}
 
   @Post()
@@ -47,13 +49,13 @@ export class ScraperController {
   })
   async processFile(@UploadedFile() file: Express.Multer.File) {
     const rows: string[] = await readCsvAsync(file.buffer)
-    const allJobs = await Promise.all(rows.map((r) => this.fileQueue.add('scrape', { keyword: r })))
+    const allJobs = await Promise.all(rows.map((r) => this.scrapeQueue.add('scrape', { keyword: r })))
     return allJobs
   }
 
   @Get(':id')
   async getJobResult(@Res() response: Response, @Param('id') id: string) {
-    const job = await this.fileQueue.getJob(id)
+    const job = await this.scrapeQueue.getJob(id)
 
     if (!job) {
       return response.sendStatus(404)
