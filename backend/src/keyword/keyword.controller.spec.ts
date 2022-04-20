@@ -136,7 +136,7 @@ describe('KeywordController', () => {
     })
 
     it('shoud throw exception on notfound response #NEGATIVE', async () => {
-      jest.spyOn(keywordService, 'delete').mockResolvedValueOnce(undefined)
+      jest.spyOn(keywordService, 'delete').mockResolvedValueOnce({} as never)
 
       expect(keywordController.delete(sampleData.keywordId)).rejects.toThrow()
 

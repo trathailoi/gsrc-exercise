@@ -174,7 +174,7 @@ export class KeywordController {
     // }
     const result = await this.keywordService.delete(id)
     if (!result.affected) {
-      return new NotFoundException()
+      throw new NotFoundException()
     }
     return result
   }
