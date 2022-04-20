@@ -64,7 +64,7 @@ defineProps({
     default: false
   }
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'signup-succeed'])
 
 const message = useMessage()
 const formSignUpRef = ref<FormInst | null>(null)
@@ -128,7 +128,8 @@ const onSignUpClick = (e: MouseEvent) => {
         await signup(formValue.value)
         message.destroyAll()
         message.success('Sign up successfully! Please sign in!')
-        emit('close', false)
+        emit('signup-succeed', formValue.value.email)
+        // emit('close', false)
       } catch (err: any) {
         if (err.response) {
           message.error((err.response.data && err.response.data.message) || err.message)

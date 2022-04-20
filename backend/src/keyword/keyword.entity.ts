@@ -24,10 +24,10 @@ export class Keyword extends BaseEntity<Keyword> {
 
   @ApiProperty({ type: 'string', example: '2' })
   @Column('varchar', {
-    nullable: false,
+    nullable: true,
     length: 30
   })
-    jobQueueId: string
+    jobQueueId?: string
 
   @ApiProperty({ type: 'boolean', example: false })
   @Column({ type: 'boolean', default: false })

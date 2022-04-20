@@ -1,8 +1,9 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Param, Post,
-  Res, UploadedFile, UseInterceptors
+  Req, Res, UploadedFile, UseInterceptors
 } from '@nestjs/common'
 import { Response } from 'express'
 import { InjectQueue } from '@nestjs/bull'
@@ -15,11 +16,14 @@ import { readCsvAsync } from '../common/utils'
 import { QUEUE_NAME } from '../constants/job-queue'
 import FileUploadDto from './file-upload.dto'
 
+import { KeywordService } from '../keyword/keyword.service'
+
 @ApiTags('scraper')
 @Controller('scraper')
 export class ScraperController {
   constructor(
-    @InjectQueue(QUEUE_NAME) private readonly scrapeQueue: Queue
+    @InjectQueue(QUEUE_NAME) private readonly scrapeQueue: Queue,
+    private readonly keywordService: KeywordService
   ) {}
 
   @Post()
@@ -47,10 +51,14 @@ export class ScraperController {
     description: 'A CSV file containing the keywords to be processed',
     type: FileUploadDto
   })
-  async processFile(@UploadedFile() file: Express.Multer.File) {
+  async processFile(@UploadedFile() file: Express.Multer.File, @Req() req) {
     const rows: string[] = await readCsvAsync(file.buffer)
-    const allJobs = await Promise.all(rows.map((r) => this.scrapeQueue.add('scrape', { keyword: r })))
-    return allJobs
+    // const allJobs = await Promise.all(rows.map((r) => this.scrapeQueue.add('scrape', { keyword: r })))
+    // return allJobs
+    if (rows.length > 100) {
+      throw new BadRequestException('Too many keywords')
+    }
+    return this.keywordService.createMany(rows.map((r) => ({ name: r })), req.user)
   }
 
   @Get(':id')
