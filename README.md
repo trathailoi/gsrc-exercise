@@ -1,5 +1,10 @@
 # Google Search Results Scraper (GSRS)
 
+Note:
+- There is a sample csv file located at [`<rootDir>/backend/sample/sample-keywords.csv`](backend/sample/sample-keywords.csv). You can use this one for testing, but any other csv files on your end with the same format should be fine also.
+- You can signup from the web app UI as well as the API documentation. I am using cookie to store user session, so whether you login on the web app or API, you should be logged in on the other side.
+- If you want to run this project on you local machine. Please follow the instructions below.
+
 ## Getting started
 
 ### Prerequisites
@@ -14,7 +19,7 @@
 - Open the directory [`<rootDir>/backend`](backend) in a separate VSCode window to take advantage of ESLint config.
 
 ## Tasks and commands
-**Note:** I'm on Mac, so those commands below may not work expectedly on Windows.
+***Note:** I'm on Mac, so those commands below may not work expectedly on Windows.*
 ### Frontend
 - Installation & run
   1. (optional) `cp .env.development .env.development.local`
@@ -26,22 +31,23 @@
   ```
 - End-to-end test: *Not implemented yet, probably be using [Cypress](https://www.cypress.io/)*
 - You can do the following steps to test production mode locally with virtual host:
-  1. please add this line `127.0.0.1 gsrs.loi-tra` to your `/etc/hosts` file
+  1. please add this line `127.0.0.1 gsrs.loi-tra` to your `/etc/hosts` (on MacOS) file
   2. run `npm run dev:docker`
      - This command will also spin up a backend container and a database container as well.
-  3. open [http://gsrs.loi-tra](http://gsrs.loi-tra) on browser to see the production version locally.
+  3. open [http://gsrs.loi-tra](http://gsrs.loi-tra) on browser to see the production version locally on your machine.
 
-### Backend (at the directory [`<rootDir>/backend`](backend))
+### Backend (working directory: [`<rootDir>/backend`](backend))
+  (*will give "**monorepo**" a try*)
 - `cd <rootDir>/backend`
 - Installation & run
   1. `cp .env.example .env`
   2. `npm i`
   3. start Docker on your machine
-  4. `./setup.sh`
+  4. `./setup.sh` --> this will check dependencies and set you up with the containers for PostgreSql, Redis and Tor
   5. `npm run start:dev`
   6. (optional) Seeding data: `npm run db:seed`.
 
-**Note**: You can play around with the API endpoints via the swagger documentation at http://localhost:3000/api on your local machine, or https://gsrs.loitra.xyz/api/
+***Note**: You can play around with the API endpoints via the swagger documentation at http://localhost:3000/api on your local machine, or https://gsrs.loitra.xyz/api/*
 
 - Unit test:
   ```bash
