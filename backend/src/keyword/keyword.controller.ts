@@ -12,7 +12,6 @@ import * as Joi from 'joi'
 import { Like } from 'typeorm'
 import { JoiValidationPipe } from '../common/validation.pipe'
 import { MzSwaggerAuth } from '../decorators/swagger.decorator'
-import { MzPublic } from '../decorators/public.decorator'
 
 // import { Keyword } from './keyword.entity'
 import { KeywordService } from './keyword.service'
@@ -92,7 +91,6 @@ export class KeywordController {
   @ApiQuery({
     name: 'q', required: false, schema: { minimum: 1 }, description: 'Searching keyword.'
   })
-  @MzPublic()
   async findAll(@Query('pageSize') pageSize: number, @Query('currentPage') currentPage: number, @Query('q') q: string) {
     const whereObj: { where?: object } = {}
     if (q) {

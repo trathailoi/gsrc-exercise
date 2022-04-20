@@ -27,7 +27,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "pretest:e2e": "docker-compose -f docker-compose.testing.yml up -d",
-    "test:e2e": "(jest --config ./test/jest-e2e.json --runInBand) || true",
+    "test:e2e": "(jest --config ./test/jest-e2e.json --detectOpenHandles --runInBand --forceExit) || true",
     "posttest:e2e": "docker-compose -f docker-compose.testing.yml down -v"
   },
   "dependencies": {
