@@ -1,7 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import {
-  Repository, InsertResult, UpdateResult, In
+  Repository, In, ObjectLiteral
 } from 'typeorm'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
@@ -25,7 +25,7 @@ export class KeywordService extends BaseService<Keyword> {
     super(repo)
   }
 
-  async create(entity: KeywordResultDto, createdBy: User): Promise<InsertResult> {
+  async create(entity: KeywordResultDto, createdBy: User): Promise<ObjectLiteral> {
     const tmpEntity = entity
     tmpEntity.name = String(entity.name).trim()
     const foundKeyword = await this.repo.findOne({ name: tmpEntity.name, createdBy })
@@ -33,7 +33,7 @@ export class KeywordService extends BaseService<Keyword> {
       throw new ConflictException('Keyword already exists')
     }
     const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: tmpEntity.name })
-    return this.repo.insert(
+    const { identifiers } = await this.repo.insert(
       this.mapper.map(
         KeywordResultDto,
         Keyword,
@@ -44,6 +44,7 @@ export class KeywordService extends BaseService<Keyword> {
         }
       )
     )
+    return identifiers[0]
   }
 
   async createMany(entities: KeywordResultDto[], createdBy: User): Promise<any> {
@@ -82,7 +83,7 @@ export class KeywordService extends BaseService<Keyword> {
     return this.repo.findOne({ jobQueueId })
   }
 
-  async updateKeyword(id: EntityId, entity: KeywordResultDto, modifiedBy: User): Promise<UpdateResult> {
+  async updateKeyword(id: EntityId, entity: KeywordResultDto, modifiedBy: User): Promise<ObjectLiteral> {
     const tmpEntity = entity
     tmpEntity.name = String(entity.name).trim()
     const foundKeyword = await this.repo.findOne({ name: tmpEntity.name, createdBy: modifiedBy })
@@ -97,7 +98,7 @@ export class KeywordService extends BaseService<Keyword> {
     }
   }
 
-  update(id: EntityId, entity: KeywordResultDto): Promise<UpdateResult> {
+  update(id: EntityId, entity: KeywordResultDto): Promise<ObjectLiteral> {
     return this.repo.update(id, this.mapper.map(KeywordResultDto, Keyword, entity))
   }
 }
