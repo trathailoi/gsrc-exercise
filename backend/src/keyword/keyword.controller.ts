@@ -9,15 +9,14 @@ import {
 } from '@nestjs/swagger'
 import * as Joi from 'joi'
 
+import { Like } from 'typeorm'
 import { JoiValidationPipe } from '../common/validation.pipe'
 import { MzSwaggerAuth } from '../decorators/swagger.decorator'
-import { MzPublic } from '../decorators/public.decorator'
 
 // import { Keyword } from './keyword.entity'
 import { KeywordService } from './keyword.service'
 import { KeywordDto } from './dto/keyword.dto'
 import { KeywordResultDto } from './dto/keyword.result.dto'
-import { Like } from 'typeorm'
 
 @ApiTags('keywords')
 @MzSwaggerAuth()
@@ -49,7 +48,7 @@ export class KeywordController {
   }))
   async create(@Body() keywordDto: KeywordDto, @Req() req) {
     const result = await this.keywordService.create(keywordDto, req.user)
-    return result.identifiers[0]
+    return result
   }
 
   @Get()
@@ -92,7 +91,6 @@ export class KeywordController {
   @ApiQuery({
     name: 'q', required: false, schema: { minimum: 1 }, description: 'Searching keyword.'
   })
-  @MzPublic()
   async findAll(@Query('pageSize') pageSize: number, @Query('currentPage') currentPage: number, @Query('q') q: string) {
     const whereObj: { where?: object } = {}
     if (q) {
@@ -174,7 +172,7 @@ export class KeywordController {
     // }
     const result = await this.keywordService.delete(id)
     if (!result.affected) {
-      return new NotFoundException()
+      throw new NotFoundException()
     }
     return result
   }
