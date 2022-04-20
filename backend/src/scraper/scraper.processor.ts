@@ -28,11 +28,13 @@ const getHtmlPuppeteer = async (url: string) => {
   const proxy = getRandomProxy()
   console.log('proxy', proxy)
   const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: '/usr/bin/chromium-browser',
     args: [
       // '--proxy-server=socks5://127.0.0.1:9150',
       // `--proxy-server=${proxy}`,
       '--no-sandbox',
-      '--disable-setuid-sandbox'
+      '--headless', '--disable-gpu', '--disable-dev-shm-usage'
     ]
   })
 
@@ -61,8 +63,9 @@ export class ScraperProcessor {
     try {
       await this.redis.ping()
       const requestsCount = await this.redis.get('concurrent-requests-count')
-      const count = Number.isNaN(requestsCount) ? 0 : parseInt(requestsCount, 10)
+      const count = requestsCount === 'NaN' ? 0 : parseInt(requestsCount, 10)     
       this.logger.debug(`count ${count}`)
+      console.log('SCRAPE_REQUESTS_THRESHOLD', SCRAPE_REQUESTS_THRESHOLD)
       if (count && (count >= SCRAPE_REQUESTS_THRESHOLD)) { // THRESHOLD
         this.logger.debug(`Throttling for ${SCRAPE_THROTTLE_TIME}ms...`)
         // eslint-disable-next-line no-promise-executor-return

@@ -1,25 +1,37 @@
 FROM node:17-alpine AS development
 # RUN apk add bash dumb-init curl
-RUN apk update && apk add --no-cache nmap bash dumb-init curl && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
-    apk update && \
-    apk add --no-cache \
-      chromium \
-      harfbuzz \
-      "freetype>2.8" \
-      ttf-freefont \
-      nss
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-
 WORKDIR /usr/src/app
+#RUN apk update && apk add --no-cache nmap bash dumb-init curl && \
+#    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
+#    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
+#    apk update && \
+#    apk add --no-cache \
+#      chromium@edge \
+#      harfbuzz \
+#      "freetype>2.8" \
+#      ttf-freefont \
+#      nss@edge
+
+RUN set -x \
+    && apk update \
+    && apk upgrade \
+    && apk add --no-cache dumb-init curl \
+    udev \
+    ttf-freefont \
+    chromium \
+    nss \
+    && npm install puppeteer
+
+#ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV CHROME_BIN="/usr/bin/chromium-browser" \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD="true"
 
 COPY package*.json ./
 COPY ./src ./src
 COPY ./nest-cli.json ./
 COPY ./tsconfig.build.json ./
 COPY ./tsconfig.json ./
+COPY ./.env ./
 
 RUN npm install
 
