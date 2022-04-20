@@ -62,6 +62,10 @@ export class AppConfig {
     return this.getValue('SHOW_HEALTH_LOGS', false) === 'true'
   }
 
+  showDbLogs() {
+    return this.getValue('SHOW_DB_LOGS', false) === 'true'
+  }
+
   getGeneralValidationSchema() {
     return Joi.object({
       PORT: Joi.number().default(this.getPort()),
@@ -83,6 +87,21 @@ export class AppConfig {
       REDIS_HOST: Joi.string().required(),
       REDIS_PORT: Joi.number().required()
     })
+  }
+
+  getScrapeConfig() {
+    const requestThrehold = this.getValue('SCRAPE_REQUESTS_THRESHOLD', false)
+    const throttleTime = this.getValue('SCRAPE_THROTTLE_TIME', false)
+    return {
+      SCRAPE_REQUESTS_THRESHOLD: Number.isNaN(requestThrehold) ? 3 : parseInt(requestThrehold, 10),
+      SCRAPE_THROTTLE_TIME: Number.isNaN(throttleTime) ? 3000 : parseInt(throttleTime, 10),
+      getRandomProxy: () => {
+        const ports = process.env.PROXY_PORTS ? String(process.env.PROXY_PORTS).split(',') : ['9150', '9152', '9153', '9154']
+        const host = String(this.getValue('PROXY_HOST'))
+        const randomPort = ports[Math.floor(Math.random() * ports.length)]
+        return `socks5://${host}:${randomPort}`
+      }
+    }
   }
 }
 

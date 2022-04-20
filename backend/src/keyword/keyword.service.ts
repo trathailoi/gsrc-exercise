@@ -26,17 +26,19 @@ export class KeywordService extends BaseService<Keyword> {
   }
 
   async create(entity: KeywordResultDto, createdBy: User): Promise<InsertResult> {
-    const foundKeyword = await this.repo.findOne({ name: entity.name, createdBy })
+    const tmpEntity = entity
+    tmpEntity.name = String(entity.name).trim()
+    const foundKeyword = await this.repo.findOne({ name: tmpEntity.name, createdBy })
     if (foundKeyword) {
       throw new ConflictException('Keyword already exists')
     }
-    const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: entity.name })
+    const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: tmpEntity.name })
     return this.repo.insert(
       this.mapper.map(
         KeywordResultDto,
         Keyword,
         {
-          ...entity,
+          ...tmpEntity,
           jobQueueId: jobData.id, // NOTE: possibly be `${}${jobId}`
           createdBy
         }
@@ -45,7 +47,7 @@ export class KeywordService extends BaseService<Keyword> {
   }
 
   async createMany(entities: KeywordResultDto[], createdBy: User): Promise<any> {
-    const uniqueKeywords = [...new Set(entities.map((entity) => entity.name))]
+    const uniqueKeywords = [...new Set(entities.map((entity) => String(entity.name).trim()))]
     const foundKeywords = await this.repo.find({ name: In(uniqueKeywords), createdBy })
     const foundKeywordsStrings = foundKeywords.map((foundKeyword) => foundKeyword.name)
     const jobs = uniqueKeywords.reduce((vKs, keyword) => {
@@ -81,12 +83,18 @@ export class KeywordService extends BaseService<Keyword> {
   }
 
   async updateKeyword(id: EntityId, entity: KeywordResultDto, modifiedBy: User): Promise<UpdateResult> {
-    const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: entity.name })
     const tmpEntity = entity
-    tmpEntity.jobQueueId = String(jobData.id)
-    tmpEntity.isFinishedScraping = false
-    tmpEntity.modifiedBy = modifiedBy
-    return this.update(id, tmpEntity)
+    tmpEntity.name = String(entity.name).trim()
+    const foundKeyword = await this.repo.findOne({ name: tmpEntity.name, createdBy: modifiedBy })
+    if (foundKeyword && (foundKeyword.id !== id)) {
+      throw new ConflictException('Keyword already exists')
+    } else {
+      const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: tmpEntity.name })
+      tmpEntity.jobQueueId = String(jobData.id)
+      tmpEntity.isFinishedScraping = false
+      tmpEntity.modifiedBy = modifiedBy
+      return this.update(id, tmpEntity)
+    }
   }
 
   update(id: EntityId, entity: KeywordResultDto): Promise<UpdateResult> {

@@ -1,29 +1,15 @@
-import { chromium } from 'playwright'
+import * as puppeteer from 'puppeteer'
 import { load as cheerioLoad } from 'cheerio'
 import { Process, Processor } from '@nestjs/bull'
 import { Job, DoneCallback } from 'bull'
+import { InjectRedis } from '@liaoliaots/nestjs-redis'
+import Redis from 'ioredis'
 
+import { appConfig } from '../app.config'
 import { QUEUE_NAME, JOB_NAME } from '../constants/job-queue'
 import { FmLogger } from '../logger/logger.service'
 
 import { KeywordService } from '../keyword/keyword.service'
-
-// import { proxies } from './proxies.factory'
-// const proxyServerUri = proxies[Math.floor(Math.random() * proxies.length)]
-// console.log('proxyServerUri', proxyServerUri)
-
-const getHtml = async (url: string) => {
-  const browser = await chromium.launch({
-    // proxy: { server: proxyServerUri }
-  })
-  const context = await browser.newContext()
-  const page = await context.newPage()
-  await page.goto(url)
-  const html = await page.content()
-  await browser.close()
-
-  return html
-}
 
 type ResultInfo = Record<string, unknown> | {
   adwordsCount: number,
@@ -32,65 +18,102 @@ type ResultInfo = Record<string, unknown> | {
   rawHtml: string
 }
 
-const crawl = async (keyword: string) => {
-  const url = `https://www.google.com/search?q=${keyword}`
-  console.log('Crawl: ', url)
-  const resultInfo: ResultInfo = {
-    adwordsCount: 2,
-    linksCount: 116,
-    resultStats: 'About 158,000,000 results (0.48 seconds)',
-    rawHtml: '<html><body></body></html>'
-  }
+const {
+  SCRAPE_REQUESTS_THRESHOLD,
+  SCRAPE_THROTTLE_TIME,
+  getRandomProxy
+} = appConfig.getScrapeConfig()
 
-  // const html = await getHtml(url)
-  // const $ = cheerioLoad(html)
+const getHtmlPuppeteer = async (url: string) => {
+  const proxy = getRandomProxy()
+  console.log('proxy', proxy)
+  const browser = await puppeteer.launch({
+    args: [
+      // '--proxy-server=socks5://127.0.0.1:9150',
+      // `--proxy-server=${proxy}`,
+      '--no-sandbox',
+      '--disable-setuid-sandbox'
+    ]
+  })
 
-  // const ads = $('#tads > div > [data-text-ad]') // or [data-hveid]
-  // console.log('ads', ads)
-  // resultInfo.adwordsCount = ads.length
+  const page = await browser.newPage()
+  // await page.goto('https://api.ipify.org/') // http://jsonip.com/
+  await page.goto(url)
 
-  // const allLinks = $('a')
-  // console.log('allLinks', allLinks)
-  // resultInfo.linksCount = allLinks.length
+  const content = await page.content()
 
-  // const resultStats = $('#resultStats').text()
-  // console.log('resultStats', resultStats)
-  // resultInfo.resultStats = resultStats
+  browser.close()
 
-  // resultInfo.rawHtml = $.html()
-
-  // eslint-disable-next-line no-promise-executor-return
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-
-  return resultInfo
+  return content
 }
 
 @Processor(QUEUE_NAME)
 export class ScraperProcessor {
   private readonly logger = new FmLogger(ScraperProcessor.name)
 
-  constructor(private readonly keywordService: KeywordService) {}
+  constructor(
+    private readonly keywordService: KeywordService,
+    @InjectRedis() private readonly redis: Redis
+  ) {}
 
   @Process(JOB_NAME)
   async handleTranscode(job: Job, doneCallback: DoneCallback) {
-    this.logger.log('Start scraping...')
-    const { keyword } = job.data
-    this.logger.log(`job - keyword: ${job.id} - ${keyword}`)
+    try {
+      await this.redis.ping()
+      const requestsCount = await this.redis.get('concurrent-requests-count')
+      const count = Number.isNaN(requestsCount) ? 0 : parseInt(requestsCount, 10)
+      this.logger.debug(`count ${count}`)
+      if (count && (count >= SCRAPE_REQUESTS_THRESHOLD)) { // THRESHOLD
+        this.logger.debug(`Throttling for ${SCRAPE_THROTTLE_TIME}ms...`)
+        // eslint-disable-next-line no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, SCRAPE_THROTTLE_TIME))
 
-    const resultInfo = await crawl(keyword)
-    const foundKeywordRecord = await this.keywordService.findOneByJob(String(job.id))
-    if (foundKeywordRecord) {
-      await this.keywordService.update(foundKeywordRecord.id, {
-        ...resultInfo,
-        isFinishedScraping: true
+        await this.redis.set('concurrent-requests-count', 0)
+      } else {
+        await this.redis.set('concurrent-requests-count', count + 1)
+      }
+
+      this.logger.debug('Start scraping...')
+      const { keyword } = job.data
+      this.logger.debug(`job - keyword: ${job.id} - ${keyword}`)
+
+      const resultInfo: ResultInfo = {}
+
+      const url = `https://www.google.com/search?q=${keyword}`
+      this.logger.debug(`Crawl: ${url}`)
+      const html = await getHtmlPuppeteer(url)
+      const $ = cheerioLoad(html)
+
+      const ads = $('#tads > div > [data-text-ad]') // or [data-hveid]
+      this.logger.debug(`ads: ${ads}`)
+      resultInfo.adwordsCount = ads.length
+
+      const allLinks = $('a')
+      // console.log('allLinks', allLinks)
+      resultInfo.linksCount = allLinks.length
+
+      const resultStats = $('#result-stats').text()
+      this.logger.debug(`resultStats: ${resultStats}`)
+      resultInfo.resultStats = resultStats
+
+      resultInfo.rawHtml = $.html()
+
+      const foundKeywordRecord = await this.keywordService.findOneByJob(String(job.id))
+      if (foundKeywordRecord) {
+        await this.keywordService.update(foundKeywordRecord.id, {
+          ...resultInfo,
+          isFinishedScraping: true
+        })
+      }
+
+      doneCallback(null, {
+        keyword,
+        keywordRecordId: foundKeywordRecord && foundKeywordRecord.id,
+        success: true
       })
+      this.logger.debug('Scraping completed')
+    } catch (err: any) {
+      this.logger.error(`err: ${err.message}`)
     }
-
-    doneCallback(null, {
-      keyword,
-      keywordRecordId: foundKeywordRecord && foundKeywordRecord.id,
-      success: true
-    })
-    this.logger.log('Scraping completed')
   }
 }

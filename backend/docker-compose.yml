@@ -15,14 +15,18 @@ services:
     environment:
       - MODE=DEV
       # - CLIENT_URL=http://localhost:8080
-      - CLIENT_URL=http://gsrs.loi-tra
+      # - CLIENT_URL=http://gsrs.loi-tra
       - POSTGRES_HOST=gsrs-db
       - REDIS_HOST=gsrs-redis
+      - PROXY_HOST=gsrs-tor
+      # - SHOW_DB_LOGS=false
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
       - gsrs-db
+      - gsrs-redis
+      - gsrs-tor
     tty: true
     stdin_open: true
 
@@ -46,6 +50,24 @@ services:
       - "${REDIS_PORT-6379}:6379"
     volumes:
       - redis-data:/data
+
+  gsrs-tor:
+    image: peterdavehello/tor-socks-proxy
+    container_name: gsrs-tor
+    restart: always
+    # ports:
+    #   - 127.0.0.1:9150:9150/tcp # Tor SOCKS proxy
+    #   - 127.0.0.1:9152:9152/tcp # Tor SOCKS proxy
+    #   - 127.0.0.1:9153:9153/tcp # Tor SOCKS proxy
+    #   - 127.0.0.1:9154:9154/tcp # Tor SOCKS proxy
+    expose:
+      - 9150
+      # - 9151
+      - 9152
+      - 9153
+      - 9154
+    volumes:
+      - ./torrc:/etc/tor/torrc
 
 networks:
   default:
