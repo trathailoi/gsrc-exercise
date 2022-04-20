@@ -53,13 +53,13 @@ export const useRootStore = defineStore('rootStore', {
       signout()
       setCookie(tokenKey, '', 0)
       this.user = {}
-      this.router.push({ name: 'sign-in' })
+      this.router.push({ name: 'authen' })
     },
     async authCheck(): Promise<IUser> {
       try {
         const result = await authCheckSvc()
         if (result.status === 401) {
-          // this.router.push({ name: 'sign-in' })
+          // this.router.push({ name: 'authen' })
         } else if (result && result.data) {
           this.updateAuthUser(result.data)
           return result.data

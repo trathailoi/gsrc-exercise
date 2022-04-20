@@ -1,5 +1,18 @@
 FROM node:17-alpine AS development
-RUN apk add dumb-init curl
+# RUN apk add bash dumb-init curl
+RUN apk update && apk add --no-cache nmap bash dumb-init curl && \
+    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
+    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+      chromium \
+      harfbuzz \
+      "freetype>2.8" \
+      ttf-freefont \
+      nss
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -9,8 +22,6 @@ COPY ./tsconfig.build.json ./
 COPY ./tsconfig.json ./
 
 RUN npm install
-RUN npm install @nestjs/platform-express
-# RUN npm install -g @nestjs/cli
 
 ARG PORT=80
 ENV PORT=${PORT}
@@ -37,7 +48,19 @@ RUN npm run build
 
 # ----------------- PRODUCTION -----------------
 FROM node:17-alpine As production
-RUN apk add dumb-init curl
+# RUN apk add bash dumb-init curl
+RUN apk update && apk add --no-cache nmap bash dumb-init curl && \
+    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
+    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+      chromium \
+      harfbuzz \
+      "freetype>2.8" \
+      ttf-freefont \
+      nss
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}

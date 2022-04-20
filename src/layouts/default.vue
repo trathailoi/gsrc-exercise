@@ -6,7 +6,7 @@
           <template #avatar>
             <router-link :to="{ name: 'home' }" class="no-underline text-black dark:text-white">
               <n-icon size="35">
-                <i-mdi-home />
+                <i-mdi-google />
               </n-icon>
             </router-link>
           </template>

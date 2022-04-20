@@ -3,11 +3,14 @@ import {
   // RequestMethod,
   MiddlewareConsumer
 } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
-import * as Joi from 'joi'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TerminusModule } from '@nestjs/terminus'
 import { APP_GUARD, APP_FILTER } from '@nestjs/core'
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
+import { BullModule } from '@nestjs/bull'
+import { RedisModule } from '@liaoliaots/nestjs-redis'
+import { RedisHealthModule } from '@liaoliaots/nestjs-redis/health'
+
 import { AllExceptionFilter } from './filters/exception.filter'
 
 import { appConfig } from './app.config'
@@ -25,32 +28,42 @@ import { UserModule } from './user/user.module'
 import { AuthModule } from './auth/auth.module'
 import { JwtAuthGuard } from './auth/jwt-auth.guard'
 
+import { ScraperModule } from './scraper/scraper.module'
+import { KeywordModule } from './keyword/keyword.module'
+
 @Module({
   imports: [
-    DatabaseModule,
-    LoggerModule,
-    TerminusModule,
     ConfigModule.forRoot({
       // envFilePath: ['.env.test', '.env'],
       ignoreEnvFile: true,
-      validationSchema: Joi.object({
-        POSTGRES_HOST: Joi.string().required(),
-        POSTGRES_PORT: Joi.number().required(),
-        POSTGRES_USER: Joi.string().required(),
-        POSTGRES_PASSWORD: Joi.string().required(),
-        POSTGRES_DB: Joi.string().required(),
-        PORT: Joi.number().default(appConfig.getPort()),
-        NODE_ENV: Joi.string()
-          .valid('development', 'production', 'test', 'provision')
-          .default('development')
+      validationSchema: appConfig.getGeneralValidationSchema()
+    }),
+    DatabaseModule,
+    LoggerModule,
+    TerminusModule,
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async () => ({
+        config: appConfig.getRedisConfig()
       })
     }),
-    UserModule,
-    AuthModule,
+    RedisHealthModule,
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async () => ({
+        redis: appConfig.getRedisConfig()
+      })
+    }),
     ThrottlerModule.forRoot({
       ttl: 30, // retry after 30 seconds
       limit: 10 // limit to 10 requests per 30 seconds
-    })
+    }),
+    UserModule,
+    AuthModule,
+    ScraperModule,
+    KeywordModule
 
     // AutomapperModule.forRoot({
     //   options: [{

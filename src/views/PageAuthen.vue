@@ -17,6 +17,7 @@
       </n-form-item>
       <n-form-item label="Password" path="password">
         <n-input
+          ref="pwdInputInstRef"
           v-model:value="formValue.password"
           type="password"
           @keydown.enter="doSignIn"
@@ -33,13 +34,13 @@
         </n-space>
       </n-form-item>
     </n-form>
-    <PopupSignUp v-model:value="isSignUpPopupVisible" @close="showSignUpPopup(false)" />
+    <PopupSignUp v-model:value="isSignUpPopupVisible" @close="showSignUpPopup(false)" @signup-succeed="onSignUpSucceed" />
   </n-space>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FormInst, useMessage } from 'naive-ui'
+import { FormInst, InputInst, useMessage } from 'naive-ui'
 
 import { useRootStore } from '@/stores/index'
 import { setCookie } from '@/utils/index'
@@ -52,6 +53,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const message = useMessage()
 const formRef = ref<FormInst | null>(null)
+const pwdInputInstRef = ref<InputInst | null>(null)
 
 // data
 const isSignUpPopupVisible = ref(false)
@@ -109,5 +111,11 @@ const doSignIn = (e: MouseEvent | KeyboardEvent) => {
       isSubmitting.value = false
     })
   }
+}
+
+const onSignUpSucceed = (email: string) => {
+  formValue.value = { email, password: '' }
+  showSignUpPopup(false)
+  pwdInputInstRef.value?.focus()
 }
 </script>

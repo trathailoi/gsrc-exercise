@@ -30,3 +30,22 @@ declare const __APP_INFO__: {
   }
   lastBuildTime: string
 }
+
+interface KeywordDetail {
+  id: string,
+  name: string,
+  jobQueueId: string,
+  isFinishedScraping: boolean,
+  adwordsCount?: number,
+  linksCount?: number,
+  resultStats?: string,
+  rawHtml?: string,
+  createdBy: {
+    id: string,
+    email: string,
+  },
+  modifiedBy?: {
+    id: string,
+    email: string,
+  }
+}

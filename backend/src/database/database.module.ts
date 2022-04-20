@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 
-import { dbConfig } from './database.config'
+import { dbConfig, validationSchema } from './database.config'
 import DatabaseLogger from '../logger/database.logger'
 
 @Module({
@@ -21,6 +21,11 @@ import DatabaseLogger from '../logger/database.logger'
           migrations: [`${__dirname}/migration/*.{ts,js}`]
         }
       )
+    }),
+    ConfigModule.forRoot({
+      // envFilePath: ['.env.test', '.env'],
+      ignoreEnvFile: true,
+      validationSchema
     })
   ]
 })

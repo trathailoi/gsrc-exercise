@@ -32,9 +32,11 @@ export class User extends BaseEntity {
   @Column()
     password: string
 
+  @ApiProperty({ type: 'boolean', example: true })
   @Column({ default: true })
     isActive: boolean
 
+  @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
   // @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   @CreateDateColumn({
     type: 'timestamptz',
@@ -43,6 +45,7 @@ export class User extends BaseEntity {
   })
     createdAt?: Date
 
+  @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
   // @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   @UpdateDateColumn({
     type: 'timestamptz',
