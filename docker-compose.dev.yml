@@ -29,21 +29,24 @@ services:
   
   gsrs-backend:
     container_name: gsrs-backend
-    # build:
-    #   context: ./backend
-    #   target: production
-    build: ./backend
+    build: # for API documentation to work
+      context: ./backend
+      target: development
+    # build: ./backend
     image: gsrs-backend
     restart: on-failure
     env_file:
       - ./backend/.env
     environment:
-      - MODE=PROD
+      # - MODE=PROD
+      - MODE=DEV
       - CLIENT_URL=https://gsrs.loitra.xyz
       - POSTGRES_HOST=gsrs-db
       - REDIS_HOST=gsrs-redis
       - PROXY_HOST=gsrs-tor
-      # - DEBUG=true
+      - SCRAPE_REQUESTS_THRESHOLD=5
+      - SCRAPE_THROTTLE_TIME=3000
+      - DEBUG=true
       # - VERBOSE=true
       # - SHOW_HEALTH_LOGS=true
     depends_on:

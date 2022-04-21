@@ -244,12 +244,20 @@ const uploadHandler = ({
       if (res.data.length === 0) {
         message.warning('No new keywords found')
       } else {
-        message.success(res.data)
+        message.success(`${res.data.length} keywords will be searching...`)
+        getList()
       }
       onFinish()
     })
-    .catch((error) => {
-      message.success(error.message)
+    .catch((err) => {
+      if (err.response) {
+        message.error(err.message)
+      } else if (err.request) {
+        message.error(err.request)
+      } else {
+        message.error(err.message || 'Something went wrong')
+      }
+      // message.success(err.message)
       onError()
     })
 }
