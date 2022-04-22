@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
-import { useRootStore } from '@/stores/index'
+import { useAuthStore } from '@/stores/auth'
 
 const title = 'Google Search Results Scraper (GSRS)'
 
@@ -59,7 +59,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const { authCheck } = useRootStore()
+  const { authCheck } = useAuthStore()
   authCheck().then(auth => {
     if ((to.meta.authen === true) && !auth.email) {
       next({ name: 'authen' })

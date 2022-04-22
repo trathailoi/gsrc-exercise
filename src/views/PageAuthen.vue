@@ -40,18 +40,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FormInst, InputInst, useMessage } from 'naive-ui'
+import { FormInst, InputInst } from 'naive-ui'
 
-import { useRootStore } from '@/stores/index'
-import { setCookie } from '@/utils/index'
+import { useAuthStore } from '@/stores/auth'
 
-import { signin } from '@/services/authen'
 import PopupSignUp from '../views/PopupSignUp.vue'
 import { rules } from '@/utils/input-validation'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const message = useMessage()
 const formRef = ref<FormInst | null>(null)
 const pwdInputInstRef = ref<InputInst | null>(null)
 
@@ -63,10 +60,7 @@ const formValue = ref({
 })
 const isSubmitting = ref(false)
 
-// computed
-const { updateAuthUser } = useRootStore()
-
-const tokenKey = String(import.meta.env.VITE_TOKEN_KEY) || 'gsrs-token'
+const { login } = useAuthStore()
 
 // methods
 const showSignUpPopup = (val: boolean) => {
@@ -78,35 +72,13 @@ const doSignIn = (e: MouseEvent | KeyboardEvent) => {
   if (isSubmitting.value) return
   if (formRef.value) {
     isSubmitting.value = true
-    formRef.value?.validate(async (errors) => {
+    formRef.value?.validate((errors) => {
       if (!errors) {
         const { email, password } = formValue.value
-        try {
-          const { data } = await signin({ email, password })
-          if (data.success) {
-            message.success('Sign in successfuly')
-            setCookie(tokenKey, data.access_token)
-            updateAuthUser(data.user)
-            formValue.value = { email: '', password: '' }
-            router.push({ name: 'home' })
-          } else {
-            message.error(data.message)
-          }
-        } catch (err: any) {
-          if (err.response) {
-            if (err.response.status === 401) {
-              message.error('The email or password is incorrect!')
-              // message.error(err.response.data.message)
-            } else {
-              message.error(err.message)
-            }
-          } else if (err.request) {
-            message.error(err.request)
-          } else {
-            // message.error('Something went wrong')
-            message.error(err.message)
-          }
-        }
+        login({ email, password }, () => {
+          formValue.value = { email: '', password: '' }
+          router.push({ name: 'home' })
+        })
       }
       isSubmitting.value = false
     })

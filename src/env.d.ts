@@ -6,8 +6,6 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
-
-declare const __APP_VERSION__: string
 interface ImportMetaEnv {
   readonly VITE_APP_TITLE: string
   readonly VITE_BASE_API: string
@@ -18,17 +16,6 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv
-}
-
-declare type Recordable<T = any> = Record<string, T>
-declare const __APP_INFO__: {
-  pkg: {
-    name: string
-    version: string
-    dependencies: Recordable<string>
-    devDependencies: Recordable<string>
-  }
-  lastBuildTime: string
 }
 
 interface KeywordDetail {
