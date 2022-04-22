@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 
 import { setCookie } from '@/utils/index'
-import { signup, signin, signout } from '@/services/authen'
+import { signup, signin, signout, authCheckSvc } from '@/services/authen'
 
 const tokenKey = String(import.meta.env.VITE_TOKEN_KEY) || 'gsrs-token'
 
@@ -20,11 +19,6 @@ type ISignUpForm = {
 }
 const user: IUser = {}
 
-const authCheckSvc = () => axios.get(`${import.meta.env.VITE_BASE_API}${import.meta.env.VITE_BASE_API_VERSION || '/api/v1.0'}/authen/check`, {
-  withCredentials: true,
-  validateStatus: status => status >= 200 && status < 500
-})
-
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user
@@ -35,22 +29,10 @@ export const useAuthStore = defineStore('auth', {
       this.user = user
     },
     async register (formData: ISignUpForm, onSuccess?: () => void) {
-      try {
-        await signup(formData)
-        window.$message.destroyAll()
-        window.$message.success('Sign up successfully! Please sign in!')
-        onSuccess && onSuccess()
-        // emit('close', false)
-      } catch (err: any) {
-        window.$message.destroyAll()
-        if (err.response) {
-          window.$message.error((err.response.data && err.response.data.message) || err.message)
-        } else if (err.request) {
-          window.$message.error(err.request)
-        } else {
-          window.$message.error(err.message)
-        }
-      }
+      await signup(formData)
+      window.$message.destroyAll()
+      window.$message.success('Sign up successfully! Please sign in!')
+      onSuccess && onSuccess()
     },
     async login({ email, password }: { email: string, password: string }, onSuccess?: () => void) {
       try {
@@ -76,13 +58,12 @@ export const useAuthStore = defineStore('auth', {
         } else if (err.request) {
           window.$message.error(err.request)
         } else {
-          // window.$message.error('Something went wrong')
-          window.$message.error(err.message)
+          window.$message.error(err.message || 'Something went wrong')
         }
       }
     },
-    logout() {
-      signout()
+    async logout() {
+      await signout()
       setCookie(tokenKey, '', 0)
       this.user = {}
       this.router.push({ name: 'authen' })
@@ -91,6 +72,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const result = await authCheckSvc()
         if (result.status === 401) {
+          // window.$message.error('Unauthenticated!')
           // this.router.push({ name: 'authen' })
         } else if (result && result.data) {
           this.updateAuthUser(result.data)

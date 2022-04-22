@@ -60,15 +60,17 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const { authCheck } = useAuthStore()
-  authCheck().then(auth => {
-    if ((to.meta.authen === true) && !auth.email) {
-      next({ name: 'authen' })
-    } else if (to.name === 'authen' && auth.email) {
-      next({ name: 'home' })
-    } else {
-      next()
-    }
-  }).finally(() => next())
+  authCheck()
+    .then(auth => {
+      if ((to.meta.authen === true) && !auth.email) {
+        next({ name: 'authen' })
+      } else if (to.name === 'authen' && auth.email) {
+        next({ name: 'home' })
+      } else {
+        next()
+      }
+    })
+    .catch(() => next())
 })
 
 router.afterEach((to) => {

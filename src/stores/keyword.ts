@@ -22,43 +22,20 @@ export const useKeywordStore = defineStore('keyword', {
 
   actions: {
     async fetchKeywords(params: fetchKeywordsParams) {
-      try {
-        await source.cancel('Cancel for keywork.')
-        source = CancelToken.source()
-        const { data } = await getKeywords(params, source.token)
-        this.keywords = data.data
-        this.total = data.count
-        return data.count
-      } catch (err: any) {
-        if (err instanceof axios.Cancel) {
-          return
-        }
-        if (err.response) {
-          window.$message.error(err.message)
-        } else if (err.request) {
-          window.$message.error(err.request)
-        } else {
-          window.$message.error(err.message || 'Something went wrong')
-        }
-      }
+      await source.cancel('Cancel for keywork.')
+      source = CancelToken.source()
+      const { data } = await getKeywords(params, source.token)
+      this.keywords = data.data
+      this.total = data.count
+      return data.count
     },
     async removeKeyword(id: string) {
       await removeKeyword(id)
       this.keywords = this.keywords.filter((item) => item.id !== id)
     },
     async uploadFile(formData: FormData) {
-      try {
-        const { data } = await uploadCsvFile(formData)
-        return data
-      } catch (err: any) {
-        if (err.response) {
-          window.$message.error(err.message)
-        } else if (err.request) {
-          window.$message.error(err.request)
-        } else {
-          window.$message.error(err.message || 'Something went wrong')
-        }
-      }
+      const { data } = await uploadCsvFile(formData)
+      return data
     }
   }
 })
