@@ -3,13 +3,13 @@ name: Unit Tests
 on:
   workflow_dispatch: {}
   push:
-    branches: [ develop ]
+    branches: [ main, develop ]
     paths:
       - 'backend/**'
       - 'src/**'
       - '!**.spec.js'
   pull_request:
-    branches: [ develop ]
+    branches: [ main, develop ]
     paths:
       - 'backend/**'
       - 'src/**'
