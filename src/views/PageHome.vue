@@ -189,7 +189,7 @@ async function getList() {
   loading.value = false
 }
 
-const uploadHandler = async ({
+const uploadHandler = ({
   file,
   data,
   onFinish,
@@ -205,26 +205,17 @@ const uploadHandler = async ({
     })
   }
   formData.append('file', file.file as File)
-  try {
-    const data = await uploadFile(formData)
-    if (data.length === 0) {
-      message.warning('No new keywords found')
-    } else {
-      message.success(`${data.length} keywords will be searching...`)
-      getList()
-    }
-    onFinish()
-  } catch (err: any) {
-    if (err.response) {
-      message.error(err.message)
-    } else if (err.request) {
-      message.error(err.request)
-    } else {
-      message.error(err.message || 'Something went wrong')
-    }
-    // message.success(err.message)
-    onError()
-  }
+  uploadFile(formData)
+    .then((data) => {
+      if (data.length === 0) {
+        message.warning('No new keywords found')
+      } else {
+        message.success(`${data.length} keywords will be searching...`)
+        getList()
+      }
+      onFinish()
+    })
+    .catch(() => onError())
 }
 
 onMounted(() => {
