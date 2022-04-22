@@ -6,6 +6,13 @@ import { UserService } from '../user/user.service'
 
 import { IAuthUser } from './auth.interface'
 
+const commonExceptionResponse = {
+  error: 'Unauthorized',
+  message: 'Username or password is incorrect',
+  showMessage: true, // use this field to control whether to show the message above to the user on the UI
+  statusCode: 401
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -16,12 +23,11 @@ export class AuthService {
   async validateUser(email: string, pass: string) {
     const user = await this.userService.findByEmail(email)
     if (!user) {
-      throw new UnauthorizedException('Username or password is incorrect')
+      throw new UnauthorizedException(commonExceptionResponse)
     }
     const compareResult = comparePwd(pass, user.password)
-
     if (!compareResult) {
-      throw new UnauthorizedException('Username or password is incorrect')
+      throw new UnauthorizedException(commonExceptionResponse)
     }
 
     return user
