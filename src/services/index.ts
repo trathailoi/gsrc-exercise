@@ -5,6 +5,8 @@ const api = Axios.create({
   withCredentials: true
 })
 
+const SOMETHING_WRONG_MESSAGE = 'Something went wrong'
+
 api.interceptors.response.use(
   (res) => res,
   (err: any) => {
@@ -13,11 +15,15 @@ api.interceptors.response.use(
     }
     window.$message.destroyAll()
     if (err.response) {
-      window.$message.error(err.message)
+      if (err.response.data.showMessage) {
+        window.$message.error(err.response.data.message || SOMETHING_WRONG_MESSAGE)
+      } else {
+        window.$message.error(err.message)
+      }
     } else if (err.request) {
-      window.$message.error(err.request)
+      window.$message.error(err.request.responseText || SOMETHING_WRONG_MESSAGE)
     } else {
-      window.$message.error(err.message || 'Something went wrong')
+      window.$message.error(err.message || SOMETHING_WRONG_MESSAGE)
     }
     return Promise.reject(err)
   }

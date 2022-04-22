@@ -35,31 +35,15 @@ export const useAuthStore = defineStore('auth', {
       onSuccess && onSuccess()
     },
     async login({ email, password }: { email: string, password: string }, onSuccess?: () => void) {
-      try {
-        const { data } = await signin({ email, password })
-        if (data.success) {
-          window.$message.destroyAll()
-          window.$message.success('Sign in successfully')
-          setCookie(tokenKey, data.access_token)
-          this.updateAuthUser(data.user)
-          onSuccess && onSuccess()
-        } else {
-          window.$message.error(data.message)
-        }
-      } catch (err: any) {
+      const { data } = await signin({ email, password })
+      if (data.success) {
         window.$message.destroyAll()
-        if (err.response) {
-          if (err.response.status === 401) {
-            window.$message.error('The email or password is incorrect!')
-            // window.$message.error(err.response.data.message)
-          } else {
-            window.$message.error(err.message)
-          }
-        } else if (err.request) {
-          window.$message.error(err.request)
-        } else {
-          window.$message.error(err.message || 'Something went wrong')
-        }
+        window.$message.success('Sign in successfully')
+        setCookie(tokenKey, data.access_token)
+        this.updateAuthUser(data.user)
+        onSuccess && onSuccess()
+      } else {
+        window.$message.error(data.message)
       }
     },
     async logout() {
