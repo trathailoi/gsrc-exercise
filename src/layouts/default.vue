@@ -52,11 +52,13 @@ import { useRoute, RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 
 import { useRootStore } from '@/stores/index'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 // computed
-const { isDarkMode, user } = storeToRefs(useRootStore())
-const { logout } = useRootStore()
+const { isDarkMode } = storeToRefs(useRootStore())
+const { user } = storeToRefs(useAuthStore())
+const { logout } = useAuthStore()
 const currentTheme = computed(() => isDarkMode.value ? darkTheme : undefined)
 
 const routerTitle = computed<string>(() => (

@@ -64,7 +64,6 @@ export interface schemaItem {
     label: string;
   }
 
-// eslint-disable-next-line no-undef
 const { pkg, lastBuildTime } = __APP_INFO__
 const { dependencies, devDependencies, name, version } = pkg
 

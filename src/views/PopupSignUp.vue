@@ -54,7 +54,7 @@ import {
   useMessage
 } from 'naive-ui'
 
-import { signup } from '@/services/authen'
+import { useAuthStore } from '@/stores/auth'
 import { rules } from '@/utils/input-validation'
 
 // props definition
@@ -67,6 +67,7 @@ defineProps({
 const emit = defineEmits(['close', 'signup-succeed'])
 
 const message = useMessage()
+const { register } = useAuthStore()
 const formSignUpRef = ref<FormInst | null>(null)
 const rPasswordFormItemRef = ref<FormItemInst | null>(null)
 const formValue = ref({
@@ -121,24 +122,12 @@ const onSignUpClick = (e: MouseEvent) => {
   e.preventDefault()
   if (isSubmitting.value) return
   isSubmitting.value = true
-  formSignUpRef.value?.validate(async (errors) => {
+  formSignUpRef.value?.validate((errors) => {
     if (!errors) {
       message.loading('Signing up...')
-      try {
-        await signup(formValue.value)
-        message.destroyAll()
-        message.success('Sign up successfully! Please sign in!')
+      register(formValue.value, () => {
         emit('signup-succeed', formValue.value.email)
-        // emit('close', false)
-      } catch (err: any) {
-        if (err.response) {
-          message.error((err.response.data && err.response.data.message) || err.message)
-        } else if (err.request) {
-          message.error(err.request)
-        } else {
-          message.error(err.message)
-        }
-      }
+      })
     }
     isSubmitting.value = false
   })
