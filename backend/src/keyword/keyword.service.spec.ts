@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm'
 import { BullModule, getQueueToken } from '@nestjs/bull'
 import { Queue } from 'bull'
 import { getRedisToken } from '@liaoliaots/nestjs-redis'
+import { Redis } from 'ioredis'
 
 import { User } from '../user/user.entity'
 import { QUEUE_NAME, JOB_NAME } from '../constants/job-queue'
@@ -12,6 +13,7 @@ import { Keyword } from './keyword.entity'
 import { KeywordService } from './keyword.service'
 
 const MOVIE_REPOSITORY_TOKEN = getRepositoryToken(Keyword)
+const REDIS_NAMESPACE = 'default'
 
 const sampleData = {
   keyword: 'fastfood',
@@ -28,6 +30,7 @@ describe('KeywordService', () => {
   let service: KeywordService
   let keywordRepository: Repository<Keyword>
   let queue: Queue
+  let redis: Redis
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -49,7 +52,7 @@ describe('KeywordService', () => {
           }
         },
         {
-          provide: getRedisToken('default'),
+          provide: getRedisToken(REDIS_NAMESPACE),
           useValue: {
             get: jest.fn(),
             set: jest.fn(),
@@ -68,6 +71,7 @@ describe('KeywordService', () => {
     service = module.get<KeywordService>(KeywordService)
     keywordRepository = module.get<Repository<Keyword>>(MOVIE_REPOSITORY_TOKEN)
     queue = module.get<Queue>(getQueueToken(QUEUE_NAME))
+    redis = module.get<Redis>(getRedisToken(REDIS_NAMESPACE))
   })
 
   afterEach(async () => {
@@ -83,6 +87,26 @@ describe('KeywordService', () => {
 
   it('should define keywordRepository', () => {
     expect(keywordRepository).toBeDefined()
+  })
+
+  describe('scanRedisKeys', () => {
+    it('should return empty array if no keys found #NEGATIVE', async () => {
+      jest.spyOn(redis, 'scan').mockResolvedValue(['0', []])
+      const result = await service.scanRedisKeys('0', 'random-pattern', [])
+      expect(result).toEqual([])
+    })
+    it('should return found keys case #1 #POSITIVE', async () => {
+      jest.spyOn(redis, 'scan').mockResolvedValue(['0', ['random-pattern']])
+      const result = await service.scanRedisKeys('0', 'random-pattern', [])
+      expect(result).toContain('random-pattern')
+    })
+    it('should return found keys case #2 #POSITIVE', async () => {
+      jest.spyOn(redis, 'scan')
+        .mockResolvedValueOnce(['167', []])
+        .mockResolvedValueOnce(['0', ['random-pattern']])
+      const result = await service.scanRedisKeys('0', 'random-pattern', [])
+      expect(result).toContain('random-pattern')
+    })
   })
 
   describe('create', () => {
