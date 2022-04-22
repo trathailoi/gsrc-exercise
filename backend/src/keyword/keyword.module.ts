@@ -8,6 +8,7 @@ import { QUEUE_NAME } from '../constants/job-queue'
 import { KeywordService } from './keyword.service'
 import { KeywordController } from './keyword.controller'
 import { Keyword } from './keyword.entity'
+import { KeywordSubscriber } from './keyword.subscriber'
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Keyword } from './keyword.entity'
   controllers: [KeywordController],
   providers: [
     KeywordService,
+    KeywordSubscriber,
     Mapper
   ],
   exports: [KeywordService]

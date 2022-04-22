@@ -29,9 +29,9 @@ const getHtmlPuppeteer = async (url: string) => {
   console.log('proxy', proxy)
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/usr/bin/chromium-browser',
+    // executablePath: '/usr/bin/chromium-browser',
+    executablePath: process.env.CHROME_BIN || null,
     args: [
-      // '--proxy-server=socks5://127.0.0.1:9150',
       // `--proxy-server=${proxy}`,
       '--no-sandbox',
       // '--disable-setuid-sandbox',
@@ -42,7 +42,6 @@ const getHtmlPuppeteer = async (url: string) => {
   })
 
   const page = await browser.newPage()
-  // await page.goto('https://api.ipify.org/') // http://jsonip.com/
   await page.goto(url)
 
   const content = await page.content()
@@ -79,7 +78,7 @@ export class ScraperProcessor {
       }
 
       this.logger.debug('Start scraping...')
-      const { keyword } = job.data
+      const { keyword, keywordId } = job.data
       this.logger.debug(`job - keyword: ${job.id} - ${keyword}`)
 
       const resultInfo: ResultInfo = {}
@@ -103,17 +102,14 @@ export class ScraperProcessor {
 
       resultInfo.rawHtml = $.html()
 
-      const foundKeywordRecord = await this.keywordService.findOneByJob(String(job.id))
-      if (foundKeywordRecord) {
-        await this.keywordService.update(foundKeywordRecord.id, {
-          ...resultInfo,
-          isFinishedScraping: true
-        })
-      }
+      await this.keywordService.update(keywordId, {
+        ...resultInfo,
+        isFinishedScraping: true
+      })
 
       doneCallback(null, {
         keyword,
-        keywordRecordId: foundKeywordRecord && foundKeywordRecord.id,
+        keywordRecordId: keywordId,
         success: true
       })
       this.logger.debug('Scraping completed')

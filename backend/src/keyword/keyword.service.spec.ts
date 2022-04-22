@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm'
 import { Repository, In } from 'typeorm'
 import { BullModule, getQueueToken } from '@nestjs/bull'
 import { Queue } from 'bull'
+import { getRedisToken } from '@liaoliaots/nestjs-redis'
 
 import { User } from '../user/user.entity'
 import { QUEUE_NAME, JOB_NAME } from '../constants/job-queue'
@@ -11,8 +12,6 @@ import { Keyword } from './keyword.entity'
 import { KeywordService } from './keyword.service'
 
 const MOVIE_REPOSITORY_TOKEN = getRepositoryToken(Keyword)
-
-const exampleQueueMock = { add: jest.fn() }
 
 const sampleData = {
   keyword: 'fastfood',
@@ -48,11 +47,22 @@ describe('KeywordService', () => {
             insert: jest.fn(),
             update: jest.fn()
           }
+        },
+        {
+          provide: getRedisToken('default'),
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            scan: jest.fn()
+          }
         }
       ]
     })
       .overrideProvider(getQueueToken(QUEUE_NAME))
-      .useValue(exampleQueueMock)
+      .useValue({
+        add: jest.fn(),
+        getJob: jest.fn()
+      })
       .compile()
 
     service = module.get<KeywordService>(KeywordService)
@@ -79,25 +89,21 @@ describe('KeywordService', () => {
     it('shoud be correctly implemented #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(undefined)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id } as never)
 
       const result = await service.create({ name: sampleData.keyword }, sampleData.user)
 
       expect(keywordRepository.findOne).toBeCalledWith({ name: sampleData.keyword, createdBy: sampleData.user })
-      expect(queue.add).toBeCalledWith(JOB_NAME, { keyword: sampleData.keyword })
-      expect(keywordRepository.insert).toBeCalledWith({ name: sampleData.keyword, jobQueueId: sampleData.jobData.id, createdBy: sampleData.user })
+      expect(keywordRepository.insert).toBeCalledWith({ name: sampleData.keyword, createdBy: sampleData.user })
       expect(result).toHaveProperty('id')
     })
 
     it('shoud throw exception on creating duplicated keyword #NEGATIVE', async () => {
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce({ id: sampleData.keywordId, name: sampleData.keyword } as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id } as never)
 
       expect(service.create({ name: sampleData.keyword }, sampleData.user)).rejects.toThrow()
 
       expect(keywordRepository.findOne).toBeCalledWith({ name: sampleData.keyword, createdBy: sampleData.user })
-      expect(queue.add).not.toHaveBeenCalled()
       expect(keywordRepository.insert).not.toHaveBeenCalled()
     })
   })
@@ -106,16 +112,10 @@ describe('KeywordService', () => {
     it('shoud add all the imported keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce([] as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[0] } } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[1] } } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[2] } } as never)
 
       const result = await service.createMany(sampleData.keywords.map((k) => ({ name: k })), sampleData.user)
 
       expect(keywordRepository.find).toBeCalledWith({ name: In(sampleData.keywords), createdBy: sampleData.user })
-      expect(queue.add).toHaveBeenNthCalledWith(1, JOB_NAME, { keyword: sampleData.keywords[0] })
-      expect(queue.add).toHaveBeenNthCalledWith(2, JOB_NAME, { keyword: sampleData.keywords[1] })
-      expect(queue.add).toHaveBeenNthCalledWith(3, JOB_NAME, { keyword: sampleData.keywords[2] })
       expect(keywordRepository.insert).toBeCalled()
       expect(result).toStrictEqual(expect.arrayContaining([{ id: sampleData.keywordId }]))
     })
@@ -123,14 +123,10 @@ describe('KeywordService', () => {
     it('shoud skip A FEW existing keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce([{ id: sampleData.keywordId, name: sampleData.keyword }] as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[1] } } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[2] } } as never)
 
       const result = await service.createMany(sampleData.keywords.map((k) => ({ name: k })), sampleData.user)
 
       expect(keywordRepository.find).toBeCalledWith({ name: In(sampleData.keywords), createdBy: sampleData.user })
-      expect(queue.add).toHaveBeenNthCalledWith(1, JOB_NAME, { keyword: sampleData.keywords[1] })
-      expect(queue.add).toHaveBeenNthCalledWith(2, JOB_NAME, { keyword: sampleData.keywords[2] })
       expect(keywordRepository.insert).toBeCalled()
       expect(result).toStrictEqual(expect.arrayContaining([{ id: sampleData.keywordId }]))
     })
@@ -138,32 +134,42 @@ describe('KeywordService', () => {
     it('shoud skip ALL existing keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce(sampleData.keywords.map((k) => ({ id: sampleData.keywordId, name: k })) as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[0] } } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[1] } } as never)
-      jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[2] } } as never)
 
       const result = await service.createMany(sampleData.keywords.map((k) => ({ name: k })), sampleData.user)
 
       expect(keywordRepository.find).toBeCalledWith({ name: In(sampleData.keywords), createdBy: sampleData.user })
-      expect(queue.add).not.toHaveBeenCalled()
       expect(keywordRepository.insert).not.toHaveBeenCalled()
       expect(result).toStrictEqual([])
     })
   })
 
   describe('findOne', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
-      jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(undefined)
-      await service.findOne(sampleData.keywordId)
-      expect(keywordRepository.findOne).toBeCalledWith(sampleData.keywordId, { relations: ['createdBy', 'modifiedBy'] })
-    })
-  })
+    it('shoud return WITH queuedJobId #POSITIVE', async () => {
+      const mockKeyWordResult = { id: sampleData.keywordId, name: sampleData.keyword, createdBy: sampleData.user }
+      const sampleJobId = 'random-queued-job-id'
+      jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(mockKeyWordResult as never)
+      jest.spyOn(service, 'scanRedisKeys').mockResolvedValueOnce([sampleJobId])
+      jest.spyOn(queue, 'getJob').mockResolvedValueOnce({ id: sampleJobId } as never)
 
-  describe('findOneByJob', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
-      jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(undefined)
-      await service.findOneByJob(sampleData.keywordId)
-      expect(keywordRepository.findOne).toBeCalledWith({ jobQueueId: sampleData.keywordId })
+      const result = await service.findOne(sampleData.keywordId)
+
+      expect(keywordRepository.findOne).toBeCalledWith(sampleData.keywordId, { relations: ['createdBy', 'modifiedBy'] })
+      expect(queue.getJob).toBeCalled()
+      expect(result).toStrictEqual({ ...mockKeyWordResult, queuedJobId: sampleJobId })
+    })
+
+    it('shoud return WITHOUT queuedJobId #POSITIVE', async () => {
+      const mockKeyWordResult = { id: sampleData.keywordId, name: sampleData.keyword, createdBy: sampleData.user }
+      jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(mockKeyWordResult as never)
+      jest.spyOn(service, 'scanRedisKeys').mockResolvedValueOnce([])
+      jest.spyOn(queue, 'getJob').mockResolvedValueOnce(null)
+
+      const result = await service.findOne(sampleData.keywordId)
+
+      expect(keywordRepository.findOne).toBeCalledWith(sampleData.keywordId, { relations: ['createdBy', 'modifiedBy'] })
+      expect(queue.getJob).not.toBeCalled()
+      expect(result).not.toHaveProperty('queuedJobId')
+      expect(result).toStrictEqual(mockKeyWordResult)
     })
   })
 
@@ -177,7 +183,16 @@ describe('KeywordService', () => {
       const result = await service.updateKeyword(sampleData.keywordId, { name: sampleData.keyword }, sampleData.user)
 
       expect(keywordRepository.findOne).toBeCalledWith({ name: sampleData.keyword, createdBy: sampleData.user })
-      expect(queue.add).toHaveBeenCalledWith(JOB_NAME, { keyword: sampleData.keyword })
+      expect(queue.add).toHaveBeenCalledWith(
+        JOB_NAME,
+        {
+          keywordId: sampleData.keywordId,
+          keyword: sampleData.keyword
+        },
+        {
+          jobId: expect.any(String)
+        }
+      )
       expect(result).toStrictEqual(mockUpdateResult)
     })
 
@@ -188,7 +203,7 @@ describe('KeywordService', () => {
       expect(service.updateKeyword(sampleData.keywordId, { name: sampleData.keyword }, sampleData.user)).rejects.toThrow()
 
       expect(keywordRepository.findOne).toBeCalledWith({ name: sampleData.keyword, createdBy: sampleData.user })
-      expect(queue.add).not.toHaveBeenCalledWith(JOB_NAME, { keyword: sampleData.keyword })
+      expect(queue.add).not.toHaveBeenCalled()
     })
   })
 

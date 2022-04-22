@@ -36,3 +36,10 @@ export const readCsvAsync = (buffer): Promise<string[]> => new Promise((resolve)
       // console.table(rows)
     })
 })
+
+/**
+ * return a standard queue job id
+ * @param {string} keywordId
+ * @returns {string}
+ */
+export const standardizeQueuedJobId = (keywordId: string): string => `${keywordId}-${new Date().getTime()}`
