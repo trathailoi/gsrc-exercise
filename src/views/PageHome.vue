@@ -32,7 +32,7 @@
     </n-input-group>
     <n-data-table
       :columns="columns"
-      :data="items"
+      :data="keywords"
       :pagination="pagination"
       :bordered="false"
       :remote="true"
@@ -47,24 +47,22 @@ import { h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NDropdown, NIcon, useDialog, useMessage, UploadCustomRequestOptions } from 'naive-ui'
 import type { PaginationInfo } from 'naive-ui'
-import IconDotsVertival from '~icons/mdi/dots-vertical'
+import { storeToRefs } from 'pinia'
 
+import IconDotsVertival from '~icons/mdi/dots-vertical'
 import { dialogOptions, renderIcon } from '@/utils/index'
-import { getKeywords, removeKeyword } from '@/services/keywords'
-import axios from 'axios'
+
+import { useKeywordStore } from '@/stores/keyword'
 
 const router = useRouter()
 const dialog = useDialog()
 const message = useMessage()
+const { uploadFile, fetchKeywords, removeKeyword } = useKeywordStore()
 
+const { keywords, total } = storeToRefs(useKeywordStore())
 const q = ref('')
-const CancelToken = axios.CancelToken
-let source = CancelToken.source()
 
-const items = ref([])
 const loading = ref(true)
-
-const baseUrl = `${import.meta.env.VITE_BASE_API || ''}${import.meta.env.VITE_BASE_API_VERSION || '/api/v1.0'}`
 
 const columns = [
   {
@@ -155,12 +153,7 @@ const columns = [
                   content: `This action cannot be undo. Delete the keyword "${row.name}"?`,
                   positiveText: 'Delete',
                   negativeText: 'Cancel',
-                  onPositiveClick: async () => {
-                    const data = await removeKeyword(row.id)
-                    if (data) {
-                      items.value = items.value.filter((item: { id: string }) => item.id !== row.id)
-                    }
-                  }
+                  onPositiveClick: () => removeKeyword(row.id)
                 }))
               }
             }
@@ -186,42 +179,21 @@ const pagination = reactive({
 })
 
 async function getList() {
-  try {
-    loading.value = true
-    await source.cancel('Cancel for keywork.')
-    source = CancelToken.source()
-    const { data } = await getKeywords(
-      {
-        pageSize: pagination.pageSize,
-        currentPage: pagination.page,
-        ...(q.value ? { q: q.value } : {})
-      },
-      source.token
-    )
-    items.value = data.data
-    pagination.itemCount = data.count
-    loading.value = false
-    // message.success('Successfully fetched keywords')
-  } catch (err: any) {
-    if (err instanceof axios.Cancel) {
-      return
-    }
-    if (err.response) {
-      message.error(err.message)
-    } else if (err.request) {
-      message.error(err.request)
-    } else {
-      message.error(err.message || 'Something went wrong')
-    }
-  }
+  loading.value = true
+  await fetchKeywords({
+    pageSize: pagination.pageSize,
+    currentPage: pagination.page,
+    ...(q.value ? { q: q.value } : {})
+  })
+  pagination.itemCount = total.value
+  loading.value = false
 }
 
-const uploadHandler = ({
+const uploadHandler = async ({
   file,
   data,
   onFinish,
-  onError,
-  onProgress
+  onError
 }: UploadCustomRequestOptions) => {
   const formData = new FormData()
   if (data) {
@@ -233,33 +205,26 @@ const uploadHandler = ({
     })
   }
   formData.append('file', file.file as File)
-  axios
-    .post(`${baseUrl}/scraper`, formData, {
-      withCredentials: true,
-      onUploadProgress: ({ percent }: { percent: any }) => {
-        onProgress({ percent: Math.ceil(percent) })
-      }
-    })
-    .then((res) => {
-      if (res.data.length === 0) {
-        message.warning('No new keywords found')
-      } else {
-        message.success(`${res.data.length} keywords will be searching...`)
-        getList()
-      }
-      onFinish()
-    })
-    .catch((err) => {
-      if (err.response) {
-        message.error(err.message)
-      } else if (err.request) {
-        message.error(err.request)
-      } else {
-        message.error(err.message || 'Something went wrong')
-      }
-      // message.success(err.message)
-      onError()
-    })
+  try {
+    const data = await uploadFile(formData)
+    if (data.length === 0) {
+      message.warning('No new keywords found')
+    } else {
+      message.success(`${data.length} keywords will be searching...`)
+      getList()
+    }
+    onFinish()
+  } catch (err: any) {
+    if (err.response) {
+      message.error(err.message)
+    } else if (err.request) {
+      message.error(err.request)
+    } else {
+      message.error(err.message || 'Something went wrong')
+    }
+    // message.success(err.message)
+    onError()
+  }
 }
 
 onMounted(() => {
