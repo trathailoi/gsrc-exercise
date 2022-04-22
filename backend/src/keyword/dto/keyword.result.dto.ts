@@ -9,7 +9,7 @@ export class KeywordResultDto implements Readonly<KeywordResultDto> {
     name?: string
 
   @ApiProperty({ type: 'string', example: '2' })
-    jobQueueId?: string
+    queuedJobId?: string
 
   @ApiProperty({ type: 'boolean', example: false })
     isFinishedScraping?: boolean

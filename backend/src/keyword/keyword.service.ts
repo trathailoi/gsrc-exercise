@@ -5,9 +5,12 @@ import {
 } from 'typeorm'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
+import { InjectRedis } from '@liaoliaots/nestjs-redis'
+import Redis from 'ioredis'
 import type { EntityId } from 'typeorm/repository/EntityId'
 
-import { QUEUE_NAME, JOB_NAME } from '../constants/job-queue'
+import { QUEUE_NAME, QUEUE_JOB_PREFIX, JOB_NAME } from '../constants/job-queue'
+import { standardizeQueuedJobId } from '../common/utils'
 import { Mapper } from '../common/mapper'
 import { BaseService } from '../common/base.service'
 import { Keyword } from './keyword.entity'
@@ -17,9 +20,19 @@ import { User } from '../user/user.entity'
 
 @Injectable()
 export class KeywordService extends BaseService<Keyword> {
+  async scanRedisKeys(cursor: string, pattern: string, returnArr: string[]) {
+    const [cur, arr] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000)
+    // eslint-disable-next-line no-param-reassign
+    cursor = cur
+    // eslint-disable-next-line no-param-reassign
+    returnArr = [...returnArr, ...(arr.filter((key) => !returnArr.includes(key)))]
+    return (cursor === '0') ? returnArr : this.scanRedisKeys(cursor, pattern, returnArr)
+  }
+
   constructor(
     @InjectRepository(Keyword) private readonly repo: Repository<Keyword>,
     @InjectQueue(QUEUE_NAME) private readonly scrapeQueue: Queue,
+    @InjectRedis() private readonly redis: Redis,
     private readonly mapper: Mapper
   ) {
     super(repo)
@@ -32,14 +45,12 @@ export class KeywordService extends BaseService<Keyword> {
     if (foundKeyword) {
       throw new ConflictException('Keyword already exists')
     }
-    const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: tmpEntity.name })
     const { identifiers } = await this.repo.insert(
       this.mapper.map(
         KeywordResultDto,
         Keyword,
         {
           ...tmpEntity,
-          jobQueueId: jobData.id, // NOTE: possibly be `${}${jobId}`
           createdBy
         }
       )
@@ -47,40 +58,40 @@ export class KeywordService extends BaseService<Keyword> {
     return identifiers[0]
   }
 
-  async createMany(entities: KeywordResultDto[], createdBy: User): Promise<any> {
+  async createMany(entities: KeywordResultDto[], createdBy: User): Promise<ObjectLiteral[]> {
     const uniqueKeywords = [...new Set(entities.map((entity) => String(entity.name).trim()))]
     const foundKeywords = await this.repo.find({ name: In(uniqueKeywords), createdBy })
     const foundKeywordsStrings = foundKeywords.map((foundKeyword) => foundKeyword.name)
-    const jobs = uniqueKeywords.reduce((vKs, keyword) => {
-      if (foundKeywordsStrings.includes(keyword)) {
-        return vKs
-      }
-      return [...vKs, this.scrapeQueue.add(JOB_NAME, { keyword })]
-    }, [])
-    if (jobs.length) {
-      const allJobs = await Promise.all(jobs)
-      const result = await this.repo.insert(
-        allJobs.map((job) => this.mapper.map(
+    const validKeywordDTOs = uniqueKeywords.reduce((vKs, keyword) => [
+      ...vKs,
+      ...(foundKeywordsStrings.includes(keyword) ? [] : [
+        this.mapper.map(
           KeywordResultDto,
           Keyword,
           {
-            jobQueueId: job.id,
-            name: job.data.keyword,
+            name: keyword,
             createdBy
           }
-        ))
-      )
+        )
+      ])
+    ], [])
+    if (validKeywordDTOs.length) {
+      const result = await this.repo.insert(validKeywordDTOs)
       return result.identifiers
     }
     return []
   }
 
-  findOne(id: EntityId): Promise<Keyword | undefined> {
-    return this.repo.findOne(id, { relations: ['createdBy', 'modifiedBy'] })
-  }
-
-  findOneByJob(jobQueueId: string): Promise<Keyword | undefined> {
-    return this.repo.findOne({ jobQueueId })
+  async findOne(id: EntityId): Promise<Keyword & { queuedJobId?: string } | undefined> {
+    let latestJob = null
+    const jobKeys = await this.scanRedisKeys('0', `${QUEUE_JOB_PREFIX}:${id}-*`, [])
+    if (jobKeys.length) {
+      const latestJobKey = jobKeys.sort().pop()
+      latestJob = await this.scrapeQueue.getJob(latestJobKey.replace(`${QUEUE_JOB_PREFIX}:`, ''))
+    }
+    const keyword = await this.repo.findOne(id, { relations: ['createdBy', 'modifiedBy'] })
+    // keyword.rawHtml = ''
+    return Object.assign(keyword, (latestJob && { queuedJobId: String(latestJob.id) }) || {})
   }
 
   async updateKeyword(id: EntityId, entity: KeywordResultDto, modifiedBy: User): Promise<ObjectLiteral> {
@@ -90,11 +101,21 @@ export class KeywordService extends BaseService<Keyword> {
     if (foundKeyword && (foundKeyword.id !== id)) {
       throw new ConflictException('Keyword already exists')
     } else {
-      const jobData = await this.scrapeQueue.add(JOB_NAME, { keyword: tmpEntity.name })
-      tmpEntity.jobQueueId = String(jobData.id)
       tmpEntity.isFinishedScraping = false
       tmpEntity.modifiedBy = modifiedBy
-      return this.update(id, tmpEntity)
+      const updateResult = await this.update(id, tmpEntity)
+      // trigger a new job
+      this.scrapeQueue.add(
+        JOB_NAME,
+        {
+          keywordId: id,
+          keyword: tmpEntity.name
+        },
+        {
+          jobId: standardizeQueuedJobId(String(id))
+        }
+      )
+      return updateResult
     }
   }
 
