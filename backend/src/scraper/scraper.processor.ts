@@ -1,5 +1,5 @@
 import * as puppeteer from 'puppeteer'
-import { load as cheerioLoad } from 'cheerio'
+import cheerio from 'cheerio'
 import { Process, Processor } from '@nestjs/bull'
 import { Job, DoneCallback } from 'bull'
 import { InjectRedis } from '@liaoliaots/nestjs-redis'
@@ -24,33 +24,6 @@ const {
   getRandomProxy
 } = appConfig.getScrapeConfig()
 
-const getHtmlPuppeteer = async (url: string) => {
-  const proxy = getRandomProxy()
-  console.log('proxy', proxy)
-  const browser = await puppeteer.launch({
-    headless: true,
-    // executablePath: '/usr/bin/chromium-browser',
-    executablePath: process.env.CHROME_BIN || null,
-    args: [
-      // `--proxy-server=${proxy}`,
-      '--no-sandbox',
-      // '--disable-setuid-sandbox',
-      '--headless',
-      '--disable-gpu',
-      '--disable-dev-shm-usage'
-    ]
-  })
-
-  const page = await browser.newPage()
-  await page.goto(url)
-
-  const content = await page.content()
-
-  browser.close()
-
-  return content
-}
-
 @Processor(QUEUE_NAME)
 export class ScraperProcessor {
   private readonly logger = new FmLogger(ScraperProcessor.name)
@@ -59,6 +32,33 @@ export class ScraperProcessor {
     private readonly keywordService: KeywordService,
     @InjectRedis() private readonly redis: Redis
   ) {}
+
+  getHtmlPuppeteer = async (url: string) => {
+    const proxy = getRandomProxy()
+    console.log('proxy', proxy)
+    const browser = await puppeteer.launch({
+      headless: true,
+      // executablePath: '/usr/bin/chromium-browser',
+      executablePath: process.env.CHROME_BIN || null,
+      args: [
+        // `--proxy-server=${proxy}`,
+        '--no-sandbox',
+        // '--disable-setuid-sandbox',
+        '--headless',
+        '--disable-gpu',
+        '--disable-dev-shm-usage'
+      ]
+    })
+
+    const page = await browser.newPage()
+    await page.goto(url)
+
+    const content = await page.content()
+
+    browser.close()
+
+    return content
+  }
 
   @Process(JOB_NAME)
   async handleTranscode(job: Job, doneCallback: DoneCallback) {
@@ -85,8 +85,8 @@ export class ScraperProcessor {
 
       const url = `https://www.google.com/search?q=${keyword}`
       this.logger.debug(`Crawl: ${url}`)
-      const html = await getHtmlPuppeteer(url)
-      const $ = cheerioLoad(html)
+      const html = await this.getHtmlPuppeteer(url)
+      const $ = cheerio.load(html)
 
       const ads = $('#tads > div > [data-text-ad]') // or [data-hveid]
       this.logger.debug(`ads: ${ads}`)

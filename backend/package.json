@@ -72,6 +72,7 @@
   },
   "devDependencies": {
     "@automapper/types": "^6.3.1",
+    "@jest-mock/express": "^1.4.5",
     "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
@@ -115,13 +116,27 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.controller.(t|j)s",
+      "**/*.service.(t|j)s",
+      "**/*.processor.(t|j)s",
+      "**/common/utils.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/src\/constants/",
+      "/src\/database/",
+      "/src\/decorators/",
+      "/src\/filters/",
+      "/src\/health/",
+      "/src\/logger/",
+      "/src\/.*\/dto/"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "watchPlugins": [
       "jest-watch-typeahead/filename",
       "jest-watch-typeahead/testname"
-    ]
+    ],
+    "setupFiles": ["../test/setup.js"]
   }
 }

@@ -23,16 +23,16 @@ export class BaseService<T> {
   async findAll(queryObject?: { where?, relations?: string[], pagination?: { pageSize?: number, currentPage?: number }, order?, select? }): Promise<{ data: Array<T>, count: number }> {
     const defaultPaginationConf = { take: 20, skip: 0 } // skip: take * (page - 1)
     let queryObj = {}
-    if (queryObject?.where && Object.keys(queryObject?.where).length > 0) {
-      queryObj = { ...queryObj, where: queryObject?.where }
+    if (queryObject?.where && Object.keys(queryObject.where).length > 0) {
+      queryObj = { ...queryObj, where: queryObject.where }
     }
-    if (queryObject?.relations && queryObject?.relations.length > 0) {
-      queryObj = { ...queryObj, relations: queryObject?.relations }
+    if (queryObject?.relations && queryObject.relations.length > 0) {
+      queryObj = { ...queryObj, relations: queryObject.relations }
     }
-    if (queryObject?.select && queryObject?.select.length > 0) {
-      queryObj = { ...queryObj, select: queryObject?.select }
+    if (queryObject?.select && queryObject.select.length > 0) {
+      queryObj = { ...queryObj, select: queryObject.select }
     }
-    if (queryObject?.pagination && Object.keys(queryObject?.pagination).length > 0) {
+    if (queryObject?.pagination && Object.keys(queryObject.pagination).length > 0) {
       if (queryObject.pagination.pageSize) {
         defaultPaginationConf.take = queryObject.pagination.pageSize
       }
@@ -42,8 +42,8 @@ export class BaseService<T> {
       queryObj = { ...queryObj, ...defaultPaginationConf }
       // just for reference: this.repository.find({ take, skip: take * (page - 1) });
     }
-    if (queryObject?.order && Object.keys(queryObject?.order).length > 0) {
-      queryObj = { ...queryObj, order: queryObject?.order }
+    if (queryObject?.order && Object.keys(queryObject.order).length > 0) {
+      queryObj = { ...queryObj, order: queryObject.order }
       // TODO: order by multiple fields
       // this.repository.findAndCount({
       //     order: {
