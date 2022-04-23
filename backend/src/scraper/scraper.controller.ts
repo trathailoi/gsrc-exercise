@@ -8,7 +8,6 @@ import {
 import { Response } from 'express'
 import { InjectQueue } from '@nestjs/bull'
 import { Queue } from 'bull'
-// import { diskStorage } from 'multer'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger'
 
@@ -27,16 +26,7 @@ export class ScraperController {
   ) {}
 
   @Post()
-  // @UseInterceptors(AnyFilesInterceptor())
   @UseInterceptors(FileInterceptor('file', {
-    // storage: diskStorage({
-    //   destination: './uploads',
-    //   filename: (req, file, cb) => {
-    //     const fileExt: string = path.extname(file.originalname)
-    //     const fileName: string = path.basename(file.originalname, fileExt)
-    //     cb(null, path.join(`${fileName}_${Date.now().toString()}${fileExt}`))
-    //   }
-    // }),
     fileFilter: (req, file, cb) => {
       if (!file.originalname.match(/\.(csv)$/)) {
         req.fileValidationError = 'Only support image files'
@@ -53,8 +43,6 @@ export class ScraperController {
   })
   async processFile(@UploadedFile() file: Express.Multer.File, @Req() req) {
     const rows: string[] = await readCsvAsync(file.buffer)
-    // const allJobs = await Promise.all(rows.map((r) => this.scrapeQueue.add('scrape', { keyword: r })))
-    // return allJobs
     if (rows.length > 100) {
       throw new BadRequestException('Too many keywords')
     }

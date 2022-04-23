@@ -22,7 +22,7 @@ export const useKeywordStore = defineStore('keyword', {
 
   actions: {
     async fetchKeywords(params: fetchKeywordsParams) {
-      await source.cancel('Cancel for keywork.')
+      await source.cancel('Cancel for keyword.')
       source = CancelToken.source()
       const { data } = await getKeywords(params, source.token)
       this.keywords = data.data

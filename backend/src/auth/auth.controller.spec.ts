@@ -3,7 +3,6 @@ import { getMockReq, getMockRes } from '@jest-mock/express'
 
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
-import { User } from '../user/user.entity'
 
 const singinData = {
   email: 'somebody@hotmail.com',

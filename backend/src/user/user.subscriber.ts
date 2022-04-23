@@ -1,7 +1,6 @@
 import type {
   EntitySubscriberInterface,
   InsertEvent
-  // UpdateEvent
 } from 'typeorm'
 import { EventSubscriber } from 'typeorm'
 
@@ -20,13 +19,4 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
       event.entity.password = generateHash(event.entity.password)
     }
   }
-
-  // beforeUpdate(event: UpdateEvent<User>): void {
-  //   // FIXME check event.databaseEntity.password
-  //   const entity = event.entity as User
-
-  //   if (entity.password !== event.databaseEntity.password) {
-  //     entity.password = generateHash(entity.password!)
-  //   }
-  // }
 }

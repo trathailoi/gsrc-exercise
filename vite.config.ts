@@ -2,17 +2,9 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
-// import { esbuildCommonjs } from '@originjs/vite-plugin-commonjs'
 import ViteLegacy from '@vitejs/plugin-legacy'
 
-// import importToCDN, { autoComplete } from 'vite-plugin-cdn-import'
-// import analyzer from 'rollup-plugin-analyzer'
 import ViteVisualizer from 'rollup-plugin-visualizer'
-// import viteCompression from 'vite-plugin-compression'
-// import compress from 'vite-plugin-compress'
-// import removeConsole from 'vite-plugin-remove-console'
-// import { ViteWebfontDownload } from 'vite-plugin-webfont-dl'
-// import ViteFonts from 'vite-plugin-fonts'
 
 import ViteComponents from 'unplugin-vue-components/vite'
 import ViteIcons from 'unplugin-icons/vite'
@@ -39,11 +31,6 @@ export default defineConfig(({ mode }) => {
 
   const plugins = [
     vue(),
-    // analyzer(),
-    // viteCompression(),
-    // compress(),
-    // analyzer({ summaryOnly: true }),
-    // removeConsole()
 
     ViteComponents({
       dts: true,
@@ -56,43 +43,6 @@ export default defineConfig(({ mode }) => {
       compiler: 'vue3',
       autoInstall: true // expiremental
     })
-    // ViteWebfontDownload([
-    //   'https://fonts.googleapis.com/css2?family=Open+Sans&display=swap'
-    // ])
-    // ViteFonts({
-    //   google: {
-    //     families: ['Source Sans Pro']
-    //   },
-    // })
-    // importToCDN({
-    //   modules: [
-    //     autoComplete('vue'),
-    //     autoComplete('moment'),
-    //     autoComplete('axios')
-    //     // {
-    //     //   name: 'vis-util',
-    //     //   var: 'VisTimelineESNext',
-    //     //   path: 'esnext/umd/vis-timeline-graph2d.min.js'
-    //     // },
-    //     // {
-    //     //   name: 'vis-data',
-    //     //   var: 'VisTimelineESNext',
-    //     //   path: 'esnext/umd/vis-timeline-graph2d.min.js'
-    //     // },
-    //     // {
-    //     //   name: 'vis-timeline',
-    //     //   var: 'VisTimelineESNext',
-    //     //   // path: 'esnext/umd/vis-timeline-graph2d.min.js'
-    //     //   // path: 'peer/umd/vis-timeline-graph2d.min.js'
-    //     //   path: 'standalone/umd/vis-timeline-graph2d.min.js'
-    //     // }
-    //     // {
-    //     //   name: 'react-dom',
-    //     //   var: 'ReactDOM',
-    //     //   path: 'umd/react-dom.production.min.js'
-    //     // }
-    //   ]
-    // })
   ]
 
   const build = {
@@ -145,23 +95,6 @@ export default defineConfig(({ mode }) => {
     )
   }
 
-  // let optimizeDeps = {}
-  // if (isDev) {
-  //   /**
-  //    * DESC:
-  //    * dependency pre-bundling
-  //    */
-  //   optimizeDeps = {
-  //     include: [
-  //       'vue',
-  //       'pinia',
-  //       'vue-router',
-  //       // 'naive-ui',
-  //       'moment'
-  //     ]
-  //   }
-  // }
-
   return {
     plugins,
     define: {
@@ -176,37 +109,6 @@ export default defineConfig(({ mode }) => {
       }
     },
     build,
-    // optimizeDeps,
-    // optimizeDeps: {
-    //   // exclude: [
-    //   //   './src/test/HelloWorld.test.ts'
-    //   // ]
-    //   // esbuildOptions: {
-    //   //   plugins: [
-    //   //     esbuildCommonjs(['vis-timeline', 'vis-data', 'vis-util'])
-    //   //   ]
-    //   // }
-    // },
-    // build: {
-    //   rollupOptions: {
-    //     output: {
-    //       manualChunks: {
-    //         vendor: ['vis-timeline', 'vis-data', 'vis-util'],
-    //         ...renderChunks(dependencies)
-    //       }
-    //     }
-    //   }
-    //   // target: 'es2015',
-    //   // outDir: OUTPUT_DIR,
-    //   // terserOptions: {
-    //   //   compress: {
-    //   //     keep_infinity: true,
-    //   //     drop_console: true // VITE_DROP_CONSOLE
-    //   //   }
-    //   // }
-    //   // brotliSize: false,
-    //   // chunkSizeWarningLimit: 2000
-    // },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src')

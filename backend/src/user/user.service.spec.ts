@@ -58,7 +58,7 @@ describe('UserService', () => {
   })
 
   describe('create', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
+    it('should be correctly implemented #POSITIVE', async () => {
       jest.spyOn(userRepository, 'insert').mockResolvedValueOnce({ id: 'some-id', email: 'some-email' } as never)
 
       const result = await service.create({ email: 'some-email', password: 'some-password' } as never)

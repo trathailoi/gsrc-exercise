@@ -1,6 +1,5 @@
 import {
   Module,
-  // RequestMethod,
   MiddlewareConsumer
 } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
@@ -34,7 +33,6 @@ import { KeywordModule } from './keyword/keyword.module'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      // envFilePath: ['.env.test', '.env'],
       ignoreEnvFile: true,
       validationSchema: appConfig.getGeneralValidationSchema()
     }),
@@ -64,15 +62,6 @@ import { KeywordModule } from './keyword/keyword.module'
     AuthModule,
     ScraperModule,
     KeywordModule
-
-    // AutomapperModule.forRoot({
-    //   options: [{
-    //     name: 'classMapper',
-    //     pluginInitializer: classes
-    //     // namingConventions: new CamelCaseNamingConvention()
-    //   }],
-    //   singular: true
-    // })
   ],
   controllers: [AppController, HealthController],
   providers: [
@@ -96,7 +85,6 @@ export class AppModule {
     consumer
       .apply(LogsMiddleware)
       .exclude(
-        // { path: '/api/v1.0/health', method: RequestMethod.GET }
         appConfig.showHealthLogs() ? '' : `/${appConfig.getGlobalPrefix()}/v${appConfig.getApiVersion()}/health`
       )
       .forRoutes('*')

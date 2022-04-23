@@ -81,7 +81,7 @@ describe('KeywordController', () => {
       expect(result).toStrictEqual(mockFindOneResult)
     })
 
-    it('shoud throw exception on notfound response #NEGATIVE', async () => {
+    it('should throw exception on notfound response #NEGATIVE', async () => {
       jest.spyOn(keywordService, 'findOne').mockResolvedValueOnce(undefined)
 
       expect(keywordController.findOne(sampleData.keywordId)).rejects.toThrow()
@@ -101,7 +101,7 @@ describe('KeywordController', () => {
       expect(keywordService.updateKeyword).toBeCalled()
     })
 
-    it('shoud throw exception on notfound response and not updating #NEGATIVE', async () => {
+    it('should throw exception on notfound response and not updating #NEGATIVE', async () => {
       jest.spyOn(keywordService, 'findOne').mockResolvedValueOnce(undefined)
 
       expect(keywordController.update(sampleData.keywordId, { name: sampleData.keyword }, sampleData.user)).rejects.toThrow()
@@ -111,7 +111,7 @@ describe('KeywordController', () => {
       expect(keywordService.updateKeyword).not.toBeCalled()
     })
 
-    it('shoud throw exception on failed updating #NEGATIVE', async () => {
+    it('should throw exception on failed updating #NEGATIVE', async () => {
       jest.spyOn(keywordService, 'findOne').mockResolvedValueOnce({ id: sampleData.keywordId } as never)
       jest.spyOn(keywordService, 'updateKeyword').mockResolvedValueOnce({ } as never)
 
@@ -135,7 +135,7 @@ describe('KeywordController', () => {
       expect(result).toStrictEqual(mockDeleteResult)
     })
 
-    it('shoud throw exception on notfound response #NEGATIVE', async () => {
+    it('should throw exception on notfound response #NEGATIVE', async () => {
       jest.spyOn(keywordService, 'delete').mockResolvedValueOnce({} as never)
 
       expect(keywordController.delete(sampleData.keywordId)).rejects.toThrow()

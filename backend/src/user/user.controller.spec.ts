@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { UserController } from './user.controller'
 import { UserService } from './user.service'
 import { Mapper } from '../common/mapper'
-import { User } from './user.entity'
 
 describe('UserController', () => {
   let userController: UserController
