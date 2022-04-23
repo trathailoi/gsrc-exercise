@@ -54,8 +54,6 @@ export class AuthController {
       password: joiPassword
         .string()
         .min(8)
-        // .minOfSpecialCharacters(1)
-        // .minOfLowercase(1)
         .minOfUppercase(1)
         .minOfNumeric(1)
         .noWhiteSpaces()

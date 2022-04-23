@@ -43,7 +43,6 @@ export class UserController {
       }
     }
   })
-  // @ApiExcludeEndpoint()
   @UsePipes(new JoiValidationPipe({
     body: Joi.object({
       email: Joi.string().email().required(),
@@ -52,8 +51,6 @@ export class UserController {
       password: joiPassword
         .string()
         .min(8)
-        // .minOfSpecialCharacters(1)
-        // .minOfLowercase(1)
         .minOfUppercase(1)
         .minOfNumeric(1)
         .noWhiteSpaces()
@@ -68,7 +65,6 @@ export class UserController {
 
   @Get()
   @ApiOperation({ summary: 'get users (for development purpose)' })
-  // @ApiOkResponse({ type: User, tru
   @UsePipes(new JoiValidationPipe({
     query: Joi.object({
       pageSize: Joi.number().integer().min(1).max(50)
@@ -89,7 +85,6 @@ export class UserController {
         pageSize,
         currentPage
       }
-      // select: ['id', 'email', 'firstName', 'lastName']
     })
   }
 }

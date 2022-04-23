@@ -166,10 +166,6 @@ export class KeywordController {
     })
   }))
   async delete(@Param('id') id: string) {
-    // const foundRecord = await this.keywordService.findOne(id)
-    // if (!foundRecord) {
-    //   throw new NotFoundException()
-    // }
     const result = await this.keywordService.delete(id)
     if (!result.affected) {
       throw new NotFoundException()

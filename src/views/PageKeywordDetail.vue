@@ -69,20 +69,6 @@
         </n-descriptions-item>
       </n-descriptions>
     </n-card>
-
-    <!-- <n-card
-      :bordered="false"
-      title="devDependencies"
-      class="mt-4 proCard"
-      size="small"
-      :segmented="{ content: true }"
-    >
-      <n-descriptions bordered label-placement="left" class="py-2">
-        <n-descriptions-item v-for="item in devSchema" :key="item.field" :label="item.field">
-          {{ item.label }}
-        </n-descriptions-item>
-      </n-descriptions>
-    </n-card> -->
   </div>
 </template>
 
@@ -105,13 +91,10 @@ const back = () => {
 }
 const fetchDetail = async () => {
   const { data } = await getKeywordDetail(String(route.params.id))
-  // console.log('data', data)
   keywordDetail.value = data
-  // console.log('keywordDetail', keywordDetail)
 }
 
 onMounted(() => {
-  // console.log('onMounted')
   fetchDetail()
 })
 

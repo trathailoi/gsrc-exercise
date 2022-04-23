@@ -7,10 +7,7 @@ const tokenKey = String(import.meta.env.VITE_TOKEN_KEY) || 'gsrs-token'
 
 type IUser = { // NOTE: should this be a common type for both frontend and backend? --> will try monorepos
   id?: string
-  email?: string,
-  // firstName?: string,
-  // lastName?: string,
-  // fullName?: string
+  email?: string
 }
 type ISignUpForm = {
   email: string,
@@ -28,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
     updateAuthUser(user: IUser) {
       this.user = user
     },
-    async register (formData: ISignUpForm, onSuccess?: () => void) {
+    async register(formData: ISignUpForm, onSuccess?: () => void) {
       await signup(formData)
       window.$message.destroyAll()
       window.$message.success('Sign up successfully! Please sign in!')

@@ -28,7 +28,6 @@ export class User extends BaseEntity {
     lastName?: string
 
   @Exclude()
-  // @Column({ select: false })
   @Column()
     password: string
 
@@ -37,35 +36,18 @@ export class User extends BaseEntity {
     isActive: boolean
 
   @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
-  // @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   @CreateDateColumn({
     type: 'timestamptz',
     default: 'now()'
-    // nullable: true
   })
     createdAt?: Date
 
   @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
-  // @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   @UpdateDateColumn({
     type: 'timestamptz',
     default: 'now()'
-    // nullable: true
   })
     modifiedAt?: Date
-
-  // @CreateDateColumn({
-  //   default: 'now()',
-  //   update: false,
-  //   nullable: true
-  // })
-  //   createdAt: string
-
-  // @UpdateDateColumn({
-  //   default: 'now()',
-  //   nullable: true
-  // })
-  //   updatedAt: string
 
   constructor(partial?: Partial<User>) {
     super()

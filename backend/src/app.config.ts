@@ -90,10 +90,10 @@ export class AppConfig {
   }
 
   getScrapeConfig() {
-    const requestThrehold = this.getValue('SCRAPE_REQUESTS_THRESHOLD', false)
+    const requestThreshold = this.getValue('SCRAPE_REQUESTS_THRESHOLD', false)
     const throttleTime = this.getValue('SCRAPE_THROTTLE_TIME', false)
     return {
-      SCRAPE_REQUESTS_THRESHOLD: Number.isNaN(requestThrehold) ? 3 : parseInt(requestThrehold, 10),
+      SCRAPE_REQUESTS_THRESHOLD: Number.isNaN(requestThreshold) ? 3 : parseInt(requestThreshold, 10),
       SCRAPE_THROTTLE_TIME: Number.isNaN(throttleTime) ? 3000 : parseInt(throttleTime, 10),
       getRandomProxy: () => {
         const ports = process.env.PROXY_PORTS ? String(process.env.PROXY_PORTS).split(',') : ['9150', '9152', '9153', '9154']

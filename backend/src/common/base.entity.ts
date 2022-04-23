@@ -17,25 +17,10 @@ export abstract class BaseEntity<T> extends SuperBaseEntity {
   @Column({ type: 'boolean', default: false })
     isArchived?: boolean
 
-  // @Column({
-  //   type: 'timestamptz',
-  //   update: false,
-  //   default: () => 'CURRENT_TIMESTAMP'
-  // })
-  //   createdTime: Date
-
-  // @Column({
-  //   type: 'timestamptz',
-  //   default: () => 'CURRENT_TIMESTAMP',
-  //   onUpdate: 'now()'
-  // })
-  //   updatedTime: Date
-
   @ApiProperty({ type: Date, example: '2022-04-19T02:25:49.272Z' })
   @CreateDateColumn({
     type: 'timestamptz',
     default: 'now()' // default: () => 'CURRENT_TIMESTAMP'
-    // nullable: true
   })
     createdAt?: Date
 
@@ -43,7 +28,6 @@ export abstract class BaseEntity<T> extends SuperBaseEntity {
   @UpdateDateColumn({
     type: 'timestamptz',
     default: 'now()' // default: () => 'CURRENT_TIMESTAMP'
-    // nullable: true
   })
     modifiedAt?: Date
 

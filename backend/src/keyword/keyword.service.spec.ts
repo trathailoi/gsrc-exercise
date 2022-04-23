@@ -110,7 +110,7 @@ describe('KeywordService', () => {
   })
 
   describe('create', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
+    it('should be correctly implemented #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(undefined)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
 
@@ -121,7 +121,7 @@ describe('KeywordService', () => {
       expect(result).toHaveProperty('id')
     })
 
-    it('shoud throw exception on creating duplicated keyword #NEGATIVE', async () => {
+    it('should throw exception on creating duplicated keyword #NEGATIVE', async () => {
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce({ id: sampleData.keywordId, name: sampleData.keyword } as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
 
@@ -133,7 +133,7 @@ describe('KeywordService', () => {
   })
 
   describe('createMany', () => {
-    it('shoud add all the imported keywords #POSITIVE', async () => {
+    it('should add all the imported keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce([] as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
 
@@ -144,7 +144,7 @@ describe('KeywordService', () => {
       expect(result).toStrictEqual(expect.arrayContaining([{ id: sampleData.keywordId }]))
     })
 
-    it('shoud skip A FEW existing keywords #POSITIVE', async () => {
+    it('should skip A FEW existing keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce([{ id: sampleData.keywordId, name: sampleData.keyword }] as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
 
@@ -155,7 +155,7 @@ describe('KeywordService', () => {
       expect(result).toStrictEqual(expect.arrayContaining([{ id: sampleData.keywordId }]))
     })
 
-    it('shoud skip ALL existing keywords #POSITIVE', async () => {
+    it('should skip ALL existing keywords #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'find').mockResolvedValueOnce(sampleData.keywords.map((k) => ({ id: sampleData.keywordId, name: k })) as never)
       jest.spyOn(keywordRepository, 'insert').mockResolvedValueOnce({ identifiers: [{ id: sampleData.keywordId }] } as never)
 
@@ -168,7 +168,7 @@ describe('KeywordService', () => {
   })
 
   describe('findOne', () => {
-    it('shoud return WITH queuedJobId #POSITIVE', async () => {
+    it('should return WITH queuedJobId #POSITIVE', async () => {
       const mockKeyWordResult = { id: sampleData.keywordId, name: sampleData.keyword, createdBy: sampleData.user }
       const sampleJobId = 'random-queued-job-id'
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(mockKeyWordResult as never)
@@ -182,7 +182,7 @@ describe('KeywordService', () => {
       expect(result).toStrictEqual({ ...mockKeyWordResult, queuedJobId: sampleJobId })
     })
 
-    it('shoud return WITHOUT queuedJobId #POSITIVE', async () => {
+    it('should return WITHOUT queuedJobId #POSITIVE', async () => {
       const mockKeyWordResult = { id: sampleData.keywordId, name: sampleData.keyword, createdBy: sampleData.user }
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(mockKeyWordResult as never)
       jest.spyOn(service, 'scanRedisKeys').mockResolvedValueOnce([])
@@ -198,7 +198,7 @@ describe('KeywordService', () => {
   })
 
   describe('updateKeyword', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
+    it('should be correctly implemented #POSITIVE', async () => {
       const mockUpdateResult = { id: sampleData.keywordId }
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce(undefined)
       jest.spyOn(keywordRepository, 'update').mockResolvedValueOnce(mockUpdateResult as never)
@@ -220,7 +220,7 @@ describe('KeywordService', () => {
       expect(result).toStrictEqual(mockUpdateResult)
     })
 
-    it('shoud be throw exception to avoid duplicated keywords #NEGATIVE', async () => {
+    it('should be throw exception to avoid duplicated keywords #NEGATIVE', async () => {
       jest.spyOn(keywordRepository, 'findOne').mockResolvedValueOnce({ id: 'zxczxc', name: sampleData.keyword } as never)
       jest.spyOn(queue, 'add').mockResolvedValueOnce({ id: sampleData.jobData.id, data: { keyword: sampleData.keywords[0] } } as never)
 
@@ -232,7 +232,7 @@ describe('KeywordService', () => {
   })
 
   describe('update', () => {
-    it('shoud be correctly implemented #POSITIVE', async () => {
+    it('should be correctly implemented #POSITIVE', async () => {
       jest.spyOn(keywordRepository, 'update').mockResolvedValueOnce(undefined)
       await service.update(sampleData.keywordId, { name: sampleData.keyword })
       expect(keywordRepository.update).toHaveBeenCalled()

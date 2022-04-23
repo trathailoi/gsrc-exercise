@@ -49,7 +49,7 @@ import { NDropdown, NIcon, useDialog, useMessage, UploadCustomRequestOptions } f
 import type { PaginationInfo } from 'naive-ui'
 import { storeToRefs } from 'pinia'
 
-import IconDotsVertival from '~icons/mdi/dots-vertical'
+import IconDotsVertical from '~icons/mdi/dots-vertical'
 import { dialogOptions, renderIcon } from '@/utils/index'
 
 import { useKeywordStore } from '@/stores/keyword'
@@ -108,26 +108,6 @@ const columns = [
       tooltip: true
     }
   },
-  // {
-  //   title: 'State',
-  //   key: 'state',
-  //   ellipsis: {
-  //     tooltip: true
-  //   },
-  //   render(row: { state_id: Array<number|string> }) {
-  //     return row.state_id[1]
-  //   }
-  // },
-  // {
-  //   title: 'Country',
-  //   key: 'country',
-  //   ellipsis: {
-  //     tooltip: true
-  //   },
-  //   render(row: { country_id: Array<number|string> }) {
-  //     return row.country_id[1]
-  //   }
-  // },
   {
     title: '',
     key: 'action',
@@ -159,7 +139,7 @@ const columns = [
             }
           ]
         },
-        renderIcon(IconDotsVertival, { size: '16' })
+        renderIcon(IconDotsVertical, { size: '16' })
       )
     }
   }
@@ -219,7 +199,6 @@ const uploadHandler = ({
 }
 
 onMounted(() => {
-  // console.log('onMounted')
   getList()
 })
 </script>
