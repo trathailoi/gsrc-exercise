@@ -75,10 +75,8 @@ export class ScraperController {
       return response.sendStatus(202)
     }
 
-    // const result = Buffer.from(job.returnvalue)
     const { rawHtml, ...result } = job.returnvalue
-    console.log('result', result)
 
-    return response.json(result).status(200)
+    return response.json(result)
   }
 }
