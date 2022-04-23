@@ -123,13 +123,13 @@
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/src\/constants/",
-      "/src\/database/",
-      "/src\/decorators/",
-      "/src\/filters/",
-      "/src\/health/",
-      "/src\/logger/",
-      "/src\/.*\/dto/"
+      "/src/constants/",
+      "/src/database/",
+      "/src/decorators/",
+      "/src/filters/",
+      "/src/health/",
+      "/src/logger/",
+      "/src/.*/dto/"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
@@ -137,6 +137,8 @@
       "jest-watch-typeahead/filename",
       "jest-watch-typeahead/testname"
     ],
-    "setupFiles": ["../test/setup.js"]
+    "setupFiles": [
+      "../test/setup.js"
+    ]
   }
 }
