@@ -12,7 +12,7 @@ import { Mapper } from '../common/mapper'
 import { Keyword } from './keyword.entity'
 import { KeywordService } from './keyword.service'
 
-const MOVIE_REPOSITORY_TOKEN = getRepositoryToken(Keyword)
+const KEYWORD_REPOSITORY_TOKEN = getRepositoryToken(Keyword)
 const REDIS_NAMESPACE = 'default'
 
 const sampleData = {
@@ -43,7 +43,7 @@ describe('KeywordService', () => {
         Mapper,
         KeywordService,
         {
-          provide: MOVIE_REPOSITORY_TOKEN,
+          provide: KEYWORD_REPOSITORY_TOKEN,
           useValue: {
             findOne: jest.fn(),
             find: jest.fn(),
@@ -69,7 +69,7 @@ describe('KeywordService', () => {
       .compile()
 
     service = module.get<KeywordService>(KeywordService)
-    keywordRepository = module.get<Repository<Keyword>>(MOVIE_REPOSITORY_TOKEN)
+    keywordRepository = module.get<Repository<Keyword>>(KEYWORD_REPOSITORY_TOKEN)
     queue = module.get<Queue>(getQueueToken(QUEUE_NAME))
     redis = module.get<Redis>(getRedisToken(REDIS_NAMESPACE))
   })
