@@ -52,7 +52,7 @@
     "eslint-define-config": "^1.2.4",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
+    "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-testing-library": "^5.0.5",
     "eslint-plugin-vue": "^8.4.1",
     "husky": "^7.0.4",
