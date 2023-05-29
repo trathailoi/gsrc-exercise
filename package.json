@@ -83,7 +83,7 @@
     "vitest": "^0.3.5",
     "vue-eslint-parser": "^8.2.0",
     "vue-tsc": "^0.29.8",
-    "webpack": "^5.68.0"
+    "webpack": "^5.84.1"
   },
   "lint-staged": {
     "*.{vue,js,ts,tsx}": "eslint --fix",
